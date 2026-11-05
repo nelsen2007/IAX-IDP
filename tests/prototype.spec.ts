@@ -14,7 +14,6 @@ test("public and internal routes open directly without auth or runtime errors", 
     "/sales/dashboard",
     "/sales/spk/create",
     "/admin/dashboard",
-    "/brands",
     "/schedule",
     "/about",
   ]) {
@@ -36,12 +35,6 @@ test("catalog combines filters and recovers from empty results", async ({
   await expect(page.getByText("Kendaraan belum ditemukan")).toBeVisible();
   await page.getByRole("button", { name: "Reset Pencarian" }).click();
   await expect(page.locator(".vehicle-card")).toHaveCount(8);
-  await page.goto("/brands");
-  await page.getByRole("link", { name: /AUTOMOTIVE PARTNER Porsche/ }).click();
-  await expect(page.locator(".vehicle-card")).toHaveCount(1);
-  await expect(page.getByLabel("Brand", { exact: true })).toHaveValue(
-    "Porsche",
-  );
 });
 test("vehicle tabs and demo modal work with keyboard dismissal", async ({
   page,

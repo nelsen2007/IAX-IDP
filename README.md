@@ -24,7 +24,7 @@ Pengujian browser memerlukan Chromium: `npx playwright install chromium`.
 - `/`: hero cinematic, empat highlight, alur pemesanan. Tidak ada katalog di beranda.
 - `/vehicles`: delapan kendaraan ilustratif, pencarian, filter brand/kategori/harga, empty state.
 - `/vehicles/:slug`: detail, thumbnail crop, swatch pilihan warna, tab, ringkasan pemesanan demo.
-- `/brands`, `/schedule`, `/about`: informasi dan navigasi koleksi.
+- `/schedule`, `/about`: informasi event dan tentang IAX.
 - `/login`, `/register`: form demo dengan validasi browser; mengarah ke profil dummy.
 - `/member/dashboard`: profil, status pesanan, dan contoh SPK.
 - `/sales/dashboard`: statistik, tabel, pencarian, filter tanggal/status, detail pesanan.

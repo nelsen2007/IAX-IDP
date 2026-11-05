@@ -126,7 +126,7 @@ export default function App() {
         <Route path="/sales/dashboard" element={<SalesDashboard />} />
         <Route path="/sales/spk/create" element={<CreateSPK />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        {["brands", "schedule", "about"].map((x) => (
+        {["schedule", "about"].map((x) => (
           <Route path={"/" + x} key={x} element={<Info type={x} />} />
         ))}
         <Route

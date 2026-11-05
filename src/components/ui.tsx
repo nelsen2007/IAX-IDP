@@ -125,7 +125,6 @@ export function Modal({
 const nav = [
   ["/", "Beranda"],
   ["/vehicles", "Katalog Kendaraan"],
-  ["/brands", "Brand"],
   ["/schedule", "Jadwal & Info"],
   ["/about", "Tentang IAX"],
 ];
