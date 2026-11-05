@@ -17,7 +17,6 @@ import { money, vehicles } from "../data/mock";
 export function AuthPage({ register = false }: { register?: boolean }) {
   const navigate = useNavigate();
   const [show, setShow] = useState(false);
-  const [error, setError] = useState("");
   return (
     <main className="auth-page">
       <div className="auth-art">
@@ -49,48 +48,40 @@ export function AuthPage({ register = false }: { register?: boolean }) {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              const f = new FormData(e.currentTarget);
-              if (register && f.get("password") !== f.get("confirm")) {
-                setError("Konfirmasi password belum cocok.");
-                return;
-              }
               navigate("/member/dashboard");
             }}
           >
             {register && (
               <>
                 <label>
-                  Nama Karakter
-                  <input
-                    name="name"
-                    required
-                    placeholder="Nama lengkap karakter"
-                    autoComplete="name"
-                  />
+                  Nama
+                  <input name="name" required placeholder="Nama lengkap" autoComplete="name" />
                 </label>
-                <div className="form-grid">
-                  <label>
-                    Citizen ID
-                    <input required placeholder="IDP-000000" />
-                  </label>
-                  <label>
-                    Nomor Telepon RP
-                    <input required placeholder="Nomor telepon karakter" />
-                  </label>
-                </div>
               </>
             )}
             <label>
-              {register ? "Email" : "Email / Citizen ID"}
+              Nomor Hape
               <input
-                type={register ? "email" : "text"}
+                name="phone"
+                type="tel"
                 required
-                placeholder={
-                  register ? "nama@example.com" : "Email atau Citizen ID"
-                }
-                autoComplete="username"
+                placeholder="Nomor hape"
+                autoComplete={register ? "tel" : "username"}
               />
             </label>
+            {register && (
+              <label>
+                SteamHEX
+                <input
+                  name="steamhex"
+                  required
+                  placeholder="steam:110000112345678"
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                />
+              </label>
+            )}
             <label>
               Password
               <div className="password-field">
@@ -114,23 +105,6 @@ export function AuthPage({ register = false }: { register?: boolean }) {
                 </button>
               </div>
             </label>
-            {register && (
-              <label>
-                Konfirmasi Password
-                <input
-                  name="confirm"
-                  required
-                  type={show ? "text" : "password"}
-                  placeholder="Ulangi password"
-                  autoComplete="new-password"
-                />
-              </label>
-            )}
-            {error && (
-              <p className="form-error" role="alert">
-                {error}
-              </p>
-            )}
             <Button type="submit">
               {register ? "Daftar Member" : "Masuk"}
               <ArrowUpRight size={18} />
