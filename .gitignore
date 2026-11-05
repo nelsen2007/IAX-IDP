@@ -1,0 +1,9 @@
+node_modules/
+dist/
+*.tsbuildinfo
+
+test-results/
+playwright-report/
+
+.env.database.local
+.env.database.*.local
