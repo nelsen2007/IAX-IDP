@@ -14,8 +14,8 @@ try {
   );
   assert.equal(
     Number(schema.total),
-    15,
-    "Expected 14 application tables plus migration history",
+    22,
+    "Expected 14 public tables, 7 admin security tables, and migration history",
   );
   const [[seed]] = await connection.query(
     "SELECT COUNT(*) AS total FROM vehicles WHERE slug IN ('porsche-911-gt3','mercedes-amg-gt','bmw-m4','lamborghini-huracan','range-rover-sport','ford-raptor','audi-r8','ducati-panigale')",

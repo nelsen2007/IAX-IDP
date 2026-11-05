@@ -1,5 +1,5 @@
-﻿import { test, expect } from "@playwright/test";
-test("public and internal routes open directly without auth or runtime errors", async ({
+import { test, expect } from "@playwright/test";
+test("public and demo member/sales routes retain their behavior", async ({
   page,
 }) => {
   const errors: string[] = [];
@@ -76,25 +76,10 @@ test("SPK preview follows customer input and computes balance", async ({
     "SPK tidak disimpan atau diterbitkan",
   );
 });
-test("admin add form previews without changing the dummy catalog", async ({
-  page,
-}) => {
+test("legacy admin route redirects guests to secure login", async ({ page }) => {
   await page.goto("/admin/dashboard");
-  await page.getByRole("button", { name: "Tambah Kendaraan" }).click();
-  await expect(page.getByRole("dialog")).toBeVisible();
-  await page.getByLabel("Nama Kendaraan", { exact: true }).fill("Demo Car");
-  await page.getByLabel("Brand", { exact: true }).fill("Demo Brand");
-  await page.getByLabel("Varian", { exact: true }).fill("Sport");
-  await page.getByLabel("Harga RP", { exact: true }).fill("100000");
-  await page
-    .getByLabel("URL Foto", { exact: true })
-    .fill("/images/vehicle-1.jpg");
-  await page.getByRole("button", { name: "Tinjau Kendaraan" }).click();
-  await expect(page.getByRole("dialog")).toContainText(
-    "Tidak ada perubahan yang disimpan",
-  );
-  await page.getByRole("button", { name: "Selesai Meninjau" }).click();
-  await expect(page.locator("tbody tr")).toHaveCount(8);
+  await expect(page).toHaveURL(/\/admin\/login/);
+  await expect(page.getByLabel("Username", { exact: true })).toBeVisible();
 });
 test("mobile navigation and all layouts avoid horizontal page overflow", async ({
   page,

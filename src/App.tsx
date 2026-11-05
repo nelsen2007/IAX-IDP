@@ -1,16 +1,13 @@
-﻿import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { Routes, Route, useLocation, Link } from "react-router-dom";
 import { ArrowUpRight, CalendarDays, MapPin, Clock } from "lucide-react";
 import { Header, Footer, PageHeader, Button } from "./components/ui";
 import Home from "./pages/HomePage";
 import { VehicleCatalog, VehicleDetail } from "./pages/VehiclePages";
 import { AuthPage, MemberDashboard } from "./pages/MemberPages";
-import {
-  SalesDashboard,
-  AdminDashboard,
-  CreateSPK,
-} from "./pages/DashboardPages";
+import { SalesDashboard, CreateSPK } from "./pages/DashboardPages";
 import { vehicles } from "./data/mock";
+const AdminApp = lazy(() => import("./admin/AdminApp"));
 function Info({ type }: { type: string }) {
   return (
     <main className="page-wrap info-page">
@@ -112,7 +109,9 @@ export default function App() {
     document.title = `${pathname === "/" ? "IAX 2026" : pathname.includes("vehicles") ? "Kendaraan | IAX 2026" : pathname.includes("dashboard") ? "Workspace | IAX 2026" : "IAX 2026"} — INDOPRIDE Auto Expo`;
   }, [pathname]);
   const internal =
-    pathname.startsWith("/sales/") || pathname.startsWith("/admin/");
+    pathname.startsWith("/sales/") ||
+    pathname === "/admin" ||
+    pathname.startsWith("/admin/");
   return (
     <>
       {!internal && <Header />}
@@ -125,7 +124,18 @@ export default function App() {
         <Route path="/member/dashboard" element={<MemberDashboard />} />
         <Route path="/sales/dashboard" element={<SalesDashboard />} />
         <Route path="/sales/spk/create" element={<CreateSPK />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route
+          path="/admin/*"
+          element={
+            <Suspense
+              fallback={
+                <main className="page-wrap">Memuat control center…</main>
+              }
+            >
+              <AdminApp />
+            </Suspense>
+          }
+        />
         {["schedule", "about"].map((x) => (
           <Route path={"/" + x} key={x} element={<Info type={x} />} />
         ))}

@@ -67,7 +67,7 @@ try {
     console.log(`Applied: ${name}`);
   }
   console.log(
-    `Database ready: ${database}. Frontend is not connected to it yet.`,
+    `Database ready: ${database}. Migrations complete; create admin accounts only through the developer CLI.`,
   );
 } catch (error) {
   reportError(error);

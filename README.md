@@ -9,7 +9,22 @@ npm install
 npm run dev
 ```
 
-Buka http://localhost:5173. Semua route dapat dibuka langsung tanpa login.
+Buka http://localhost:5173 untuk prototype publik. Route admin memerlukan backend dan sesi administrator.
+
+## Admin Control Center
+
+Admin terintegrasi menggunakan Express + MySQL, Argon2id, MFA TOTP, sesi server, CSRF, rate limit persisten, dan CLI provisioning developer. Tidak ada registrasi atau akun admin default.
+
+Panduan environment, provisioning/MFA pertama, seluruh perintah developer, mekanisme keamanan, migration dan batas produksi: [docs/admin-security.md](docs/admin-security.md).
+
+Setelah environment dan migrasi siap:
+
+```sh
+npm run admin:create
+npm run dev:all
+```
+
+Buka **http://127.0.0.1:5173/admin/login**. Modul bisnis admin tetap **DEMO DATA**; autentikasi dan perubahan keamanan menggunakan backend nyata. Jangan menggunakan Vite preview untuk deployment admin produksi.
 
 ```sh
 npm run build
@@ -29,13 +44,16 @@ Pengujian browser memerlukan Chromium: `npx playwright install chromium`.
 - `/member/dashboard`: profil, status pesanan, dan contoh SPK.
 - `/sales/dashboard`: statistik, tabel, pencarian, filter tanggal/status, detail pesanan.
 - `/sales/spk/create`: draft SPK dengan preview langsung dan perhitungan sisa pembayaran.
-- `/admin/dashboard`: tabel kendaraan, pencarian/filter, modal tambah/edit/hapus visual.
+- `/admin/login`: autentikasi password dan MFA administrator.
+- `/admin`: overview dengan sesi admin valid.
+- `/admin/orders`, `/admin/spk`, `/admin/members`, `/admin/reports`, `/admin/settings`: lima modul admin; bisnis simulasi, keamanan akun nyata.
+- `/admin/dashboard`: alias terproteksi yang mengarah ke `/admin`.
 
 Menu workspace menggunakan query `?view=` untuk mengubah tampilan. Sidebar menjadi drawer pada layar kecil.
 
 ## Batas prototype
 
-Database MySQL `iax_2026` sudah disiapkan terpisah; frontend masih menggunakan mock data. Belum ada backend/API, autentikasi, penyimpanan localStorage, pengiriman pesanan, penerbitan SPK, atau pembuatan PDF. Data form hilang saat refresh. Tombol tinjau menunjukkan preview tanpa mengklaim data tersimpan. Harga menggunakan mata uang roleplay `RP $`, bukan harga kendaraan nyata. Semua spesifikasi, identitas, stok, statistik, serta pesanan merupakan data ilustratif.
+Database MySQL `iax_2026` menyimpan identitas/sesi admin melalui backend Express. Login member/sales dan seluruh alur bisnis masih prototype dengan mock data; belum mengirim pesanan atau menerbitkan SPK produksi. Data form bisnis hilang saat refresh. Tombol tinjau menunjukkan preview tanpa mengklaim data tersimpan. Harga menggunakan mata uang roleplay `RP $`, bukan harga kendaraan nyata. Semua spesifikasi, identitas bisnis, stok, statistik, serta pesanan merupakan data ilustratif. Kredensial admin tidak disimpan pada localStorage/sessionStorage.
 
 Foto kendaraan adalah foto contoh, bukan jaminan kesesuaian model. Thumbnail menunjukkan crop foto yang sama; swatch mencatat pilihan tanpa mengubah warna foto. Jadwal dan venue resmi belum diberikan sehingga tidak dikarang.
 

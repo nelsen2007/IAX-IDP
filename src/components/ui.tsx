@@ -186,7 +186,6 @@ export function Footer() {
         <Link to="/sales/dashboard">
           Sales Area <ArrowUpRight size={13} />
         </Link>
-        <Link to="/admin/dashboard">Admin</Link>
       </div>
     </footer>
   );

@@ -2,6 +2,8 @@
 
 Target MySQL **8.0.16+**, InnoDB, utf8mb4. Nama default `iax_2026`. Waktu tersimpan UTC; tampilan aplikasi dapat mengubahnya ke Asia/Jakarta. Semua harga menggunakan DECIMAL(18,2) dalam mata uang roleplay.
 
+Backend admin kini menggunakan database ini untuk autentikasi, MFA, sesi, audit dan rate limit. Migrasi `003_admin_schema.sql` menambah tujuh tabel `admin_*` yang terpisah dari identitas member. Tidak ada seed admin baru. Panduan lengkap akun runtime, provisioning developer, environment, retensi, dan pengujian: [admin-security.md](../docs/admin-security.md). Data transaksi dan login member/sales tetap prototype.
+
 ## Membuat database lokal
 
 MySQL80 terdeteksi aktif pada komputer ini. Akun MySQL memerlukan kredensial yang benar.

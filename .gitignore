@@ -7,3 +7,5 @@ playwright-report/
 
 .env.database.local
 .env.database.*.local
+.env.admin.local
+.superpowers/
