@@ -30,13 +30,12 @@ import {
   AdminDashboard,
   OrdersPage,
   MembersPage,
-  SPKPage,
 } from "./OperationsPages";
 import ReportsPage from "./ReportsPage";
 import SettingsPage from "./SettingsPage";
 import StaffPage from "./StaffPage";
+import SpkManagementPage from "./SpkManagementPage";
 import VehiclesPage from "./VehiclesPage";
-import { demoOrders } from "./data";
 import "./admin.css";
 
 const menus = [
@@ -167,7 +166,6 @@ export default function AdminApp() {
           >
             <Icon size={18} />
             {label}
-            {label === "PESANAN" && <small>{String(demoOrders.length).padStart(2, "0")}</small>}
           </NavLink>
         ))}
       </nav>
@@ -254,13 +252,13 @@ export default function AdminApp() {
             </p>
           )}
           <Routes>
-            <Route index element={<AdminDashboard />} />
+            <Route index element={<AdminDashboard session={session} />} />
             <Route
               path="dashboard"
               element={<Navigate to="/admin" replace />}
             />
-            <Route path="orders" element={<OrdersPage />} />
-            <Route path="spk" element={<SPKPage />} />
+            <Route path="orders" element={<OrdersPage session={session} />} />
+            <Route path="spk" element={<SpkManagementPage session={session} />} />
             <Route path="members" element={<MembersPage session={session} />} />
             <Route path="staff" element={<StaffPage session={session} />} />
             <Route path="vehicles" element={<VehiclesPage canManage={session.user.role === "ADMIN"} />} />

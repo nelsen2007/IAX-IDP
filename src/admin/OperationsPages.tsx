@@ -15,7 +15,6 @@ import {
   Clock3,
   CheckCheck,
   XCircle,
-  Car,
   Archive,
   Edit3,
   Trash2,
@@ -41,15 +40,20 @@ import {
 } from "./data";
 import { archiveRegisteredMember, readArchivedMembers, readRegisteredMembers, updateRegisteredMember, type RegisteredMember } from "../data/members";
 import type { AdminSession } from "./api";
+import { useAdminOrders } from "./orders";
+import { orderMoney } from "./data";
+import { createOrderSpk } from "../data/orders";
 
 function OrderRows({
   rows,
   onSelect,
   compact = false,
+  canDelete = false,
 }: {
   rows: DemoOrder[];
   onSelect: (o: DemoOrder) => void;
   compact?: boolean;
+  canDelete?: boolean;
 }) {
   return (
     <>
@@ -57,26 +61,20 @@ function OrderRows({
         <tr key={o.id}>
           <td>
             <strong className="admin-mono">{o.id}</strong>
-            {!compact && <small>{dateLabel(o.date)}</small>}
           </td>
-          <td>
+          {compact ? <td>
             <strong>{o.member}</strong>
             <small>{o.citizen}</small>
-          </td>
+          </td> : <><td><strong>{o.member}</strong></td><td>{o.citizen}</td><td>{o.phone}</td></>}
           <td>
             <div className="admin-vehicle-cell">
-              <img src={o.image} alt="" />
               <div>
                 <strong>{o.vehicle}</strong>
                 <small>{o.brand}</small>
               </div>
             </div>
           </td>
-          {compact ? (
-            <td className="admin-nowrap">{dateLabel(o.date)}</td>
-          ) : (
-            <td className="admin-nowrap">{money(o.price)}</td>
-          )}
+          <td className="admin-nowrap">{orderMoney(o)}</td>
           <td>
             <StatusBadge status={o.status} />
           </td>
@@ -88,6 +86,7 @@ function OrderRows({
             >
               <ArrowUpRight size={17} />
             </button>
+            {canDelete && <button className="admin-row-button danger-icon" aria-label={`Hapus pesanan ${o.id}`} onClick={() => { const orders = JSON.parse(localStorage.getItem("iax-member-orders") || "[]").filter((item: { id: string }) => item.id !== o.id); localStorage.setItem("iax-member-orders", JSON.stringify(orders)); window.dispatchEvent(new Event("iax-orders-updated")); }}><Trash2 size={16} /></button>}
           </td>
         </tr>
       ))}
@@ -97,76 +96,40 @@ function OrderRows({
 function OrderDrawer({
   order,
   onClose,
+  session,
 }: {
   order: DemoOrder;
   onClose: () => void;
+  session: AdminSession;
 }) {
-  const [message, setMessage] = useState(""),
-    [status, setStatus] = useState(order.status);
-  function simulate(action: string, next?: string) {
-    setMessage(
-      `Simulasi: ${action}. Tidak ada transaksi yang dikirim atau disimpan.`,
-    );
-    if (next) setStatus(next);
-  }
+  const [error, setError] = useState("");
+  const [status] = useState(order.status);
   return (
     <Drawer title="Detail Pesanan" onClose={onClose}>
-      <DemoNotice />
       <div className="admin-detail-title">
         <h3>{order.id}</h3>
         <StatusBadge status={status} />
       </div>
-      <img
-        className="admin-detail-vehicle"
-        src={order.image}
-        alt={order.vehicle}
-      />
       <DetailList
         items={[
           ["Nama member", order.member],
-          ["Citizen ID", order.citizen],
+          ["STEAMHEX", order.citizen],
           ["Nomor telepon RP", order.phone],
           ["Tanggal pemesanan", dateLabel(order.date)],
           ["Kendaraan", `${order.brand} ${order.vehicle}`],
-          ["Varian", order.variant],
-          ["Warna", order.color],
-          ["Harga", money(order.price)],
-          ["Catatan pelanggan", order.notes],
+          ["Quantity", `${order.quantity || 1} unit`],
+          ["Harga satuan", orderMoney(order, order.unitPrice ?? order.price)],
+          ["Total harga", orderMoney(order)],
         ]}
       />
-      <div className="admin-drawer-actions">
-        <button
-          className="admin-button primary"
-          onClick={() => simulate("pesanan diproses dalam preview", "Diproses")}
-        >
-          Proses Pesanan — simulasi
-        </button>
-        <button
-          className="admin-button"
-          onClick={() =>
-            simulate("draft SPK dapat ditinjau melalui menu SPK", "SPK Dibuat")
-          }
-        >
-          Buat SPK — simulasi
-        </button>
-        <button
-          className="admin-button danger"
-          onClick={() =>
-            simulate("pembatalan pesanan dalam preview", "Dibatalkan")
-          }
-        >
-          Batalkan Pesanan — simulasi
-        </button>
-      </div>
-      {message && (
-        <p role="status" className="admin-message">
-          {message}
-        </p>
-      )}
+      {error && <p role="alert" className="admin-error">{error}</p>}
+      <button className="admin-button primary" onClick={() => { try { createOrderSpk(order.id, session.user); onClose(); } catch (e) { setError(e instanceof Error ? e.message : "SPK gagal dibuat."); } }}>Buat SPK</button>
     </Drawer>
   );
 }
-export function AdminDashboard() {
+export function AdminDashboard({ session }: { session: AdminSession }) {
+  const orders = useAdminOrders();
+  const members = readRegisteredMembers();
   const [selected, setSelected] = useState<DemoOrder | null>(null);
   return (
     <>
@@ -184,13 +147,13 @@ export function AdminDashboard() {
         items={[
           {
             label: "Total Pesanan",
-            value: String(demoOrders.length).padStart(2, "0"),
-            note: demoOrders.length ? "Pesanan tercatat" : "Belum ada pesanan masuk",
+            value: String(orders.length).padStart(2, "0"),
+            note: orders.length ? "Pesanan tercatat" : "Belum ada pesanan masuk",
             icon: <ShoppingBag size={19} />,
           },
           {
             label: "Pesanan Baru",
-            value: String(demoOrders.filter((o) => o.status === "Baru").length).padStart(2, "0"),
+            value: String(orders.filter((o) => o.status === "Baru").length).padStart(2, "0"),
             note: "Menunggu peninjauan",
             icon: <Clock3 size={19} />,
           },
@@ -202,8 +165,8 @@ export function AdminDashboard() {
           },
           {
             label: "Total Member",
-            value: String(demoMembers.length).padStart(2, "0"),
-            note: demoMembers.length ? "Member terdaftar" : "Belum ada member",
+            value: String(members.length).padStart(2, "0"),
+            note: members.length ? "Member terdaftar" : "Belum ada member",
             icon: <Users size={19} />,
           },
         ]}
@@ -224,16 +187,16 @@ export function AdminDashboard() {
               "ID Pesanan",
               "Member",
               "Kendaraan",
-              "Tanggal",
+              "Harga",
               "Status",
               "Aksi",
             ]}
           >
-            <OrderRows rows={demoOrders} compact onSelect={setSelected} />
+            <OrderRows rows={orders} compact onSelect={setSelected} />
           </AdminDataTable>
           <div className="admin-table-foot">
-            <span>Menampilkan {demoOrders.length} pesanan</span>
-            <span>{String(demoOrders.length).padStart(2, "0")} TOTAL</span>
+            <span>Menampilkan {orders.length} pesanan</span>
+            <span>{String(orders.length).padStart(2, "0")} TOTAL</span>
           </div>
         </section>
         <section className="admin-panel admin-activity">
@@ -306,7 +269,7 @@ export function AdminDashboard() {
         </span>
       </div>
       {selected && (
-        <OrderDrawer order={selected} onClose={() => setSelected(null)} />
+        <OrderDrawer session={session} order={selected} onClose={() => setSelected(null)} />
       )}
     </>
   );
@@ -314,18 +277,18 @@ export function AdminDashboard() {
 function ShieldIcon() {
   return <CheckCheck size={18} />;
 }
-export function OrdersPage() {
+export function OrdersPage({ session }: { session: AdminSession }) {
+  const allOrders = useAdminOrders();
   const [search, setSearch] = useState(""),
-    [status, setStatus] = useState(""),
     [date, setDate] = useState(""),
     [selected, setSelected] = useState<DemoOrder | null>(null);
-  const rows = demoOrders.filter(
+  const rows = allOrders.filter(
     (o) =>
       `${o.id} ${o.member} ${o.citizen} ${o.vehicle}`
         .toLowerCase()
         .includes(search.toLowerCase()) &&
-      (!status || o.status === status) &&
-      (!date || o.date === date),
+      o.status === "Baru" &&
+      (!date || o.date.slice(0, 10) === date),
   );
   return (
     <>
@@ -334,45 +297,17 @@ export function OrdersPage() {
         title="Pesanan kendaraan"
         description="Pantau setiap pemesanan dari permintaan awal hingga selesai."
       />
-      <StatCards
-        items={[
-          {
-            label: "Semua Pesanan",
-            value: demoOrders.length,
-            note: demoOrders.length ? "Seluruh pesanan tercatat" : "Belum ada pesanan masuk",
-            icon: <ShoppingBag size={19} />,
-          },
-          {
-            label: "Menunggu Proses",
-            value: demoOrders.filter((o) => o.status === "Baru").length,
-            note: "Pesanan berstatus baru",
-            icon: <Clock3 size={19} />,
-          },
-          {
-            label: "Dalam Proses",
-            value: demoOrders.filter((o) => o.status === "Diproses" || o.status === "SPK Dibuat").length,
-            note: "Diproses dan SPK dibuat",
-            icon: <Car size={19} />,
-          },
-          {
-            label: "Selesai",
-            value: demoOrders.filter((o) => o.status === "Selesai").length,
-            note: "Pemesanan selesai",
-            icon: <CheckCheck size={19} />,
-          },
-        ]}
-      />
       <section className="admin-panel">
         <div className="admin-panel-heading">
           <div>
             <h2>Daftar pesanan</h2>
             <p>
-              {rows.length} dari {demoOrders.length} pesanan
+              {rows.length} dari {allOrders.length} pesanan
             </p>
           </div>
           <SlidersHorizontal size={18} />
         </div>
-        <div className="admin-toolbar">
+        <div className="admin-toolbar orders-toolbar">
           <label className="admin-search">
             <Search size={17} />
             <input
@@ -382,18 +317,6 @@ export function OrdersPage() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </label>
-          <select
-            aria-label="Filter status pesanan"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-          >
-            <option value="">Semua status</option>
-            {["Baru", "Diproses", "SPK Dibuat", "Selesai", "Dibatalkan"].map(
-              (s) => (
-                <option key={s}>{s}</option>
-              ),
-            )}
-          </select>
           <input
             type="date"
             aria-label="Filter tanggal pesanan"
@@ -404,7 +327,6 @@ export function OrdersPage() {
             className="admin-button"
             onClick={() => {
               setSearch("");
-              setStatus("");
               setDate("");
             }}
           >
@@ -415,7 +337,9 @@ export function OrdersPage() {
         <AdminDataTable
           headers={[
             "ID / Tanggal",
-            "Member / Citizen ID",
+            "Nama Member",
+            "STEAMHEX",
+            "Nomor Hape",
             "Kendaraan",
             "Harga",
             "Status",
@@ -423,15 +347,15 @@ export function OrdersPage() {
           ]}
           empty={!rows.length}
         >
-          <OrderRows rows={rows} onSelect={setSelected} />
+          <OrderRows rows={rows} onSelect={setSelected} canDelete={session.user.role === "ADMIN" || session.user.role === "CASHIER" || session.user.username === "dev"} />
         </AdminDataTable>
         <div className="admin-table-foot">
-          <span>Identitas dan nilai RP pada tabel adalah ilustrasi.</span>
+          <span>Data pembeli dan kendaraan saat pemesanan.</span>
           <span>{rows.length} PESANAN</span>
         </div>
       </section>
       {selected && (
-        <OrderDrawer order={selected} onClose={() => setSelected(null)} />
+        <OrderDrawer session={session} order={selected} onClose={() => setSelected(null)} />
       )}
     </>
   );

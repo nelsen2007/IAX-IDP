@@ -283,7 +283,6 @@ export function DashboardShell({
           <Link to="/">
             <LogOut size={17} /> Kembali ke website
           </Link>
-          <small>Prototype frontend · Mode demo</small>
         </div>
       </aside>
       <div className="workspace-main">

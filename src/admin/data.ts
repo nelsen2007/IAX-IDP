@@ -19,7 +19,11 @@ export const demoOrders = orders.map((order, i) => ({
       ? "Konsultasi pilihan warna saat pameran."
       : "Tidak ada catatan tambahan.",
 }));
-export type DemoOrder = (typeof demoOrders)[number];
+export type DemoOrder = (typeof demoOrders)[number] & { quantity?: number; unitPrice?: number; currency?: string; salesName?: string; realOrder?: boolean };
+export function orderMoney(order: DemoOrder, value = order.price) {
+  return order.currency ? `${order.currency} ${new Intl.NumberFormat("en-US").format(value)}` : moneyFormat(value);
+}
+function moneyFormat(value: number) { return `IDP $ ${new Intl.NumberFormat("en-US").format(value)}`; }
 export const demoMembers = demoOrders.map((order, i) => ({
   id: `MBR-00${i + 1}`,
   name: order.member,

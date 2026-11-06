@@ -576,6 +576,7 @@
 .admin-profile-menu button, .admin-profile-menu a { display: block; width: 100%; padding: 9px 0; color: #a9c39d; background: none; border: 0; text-align: left; font: inherit; font-size: 10px; cursor: pointer; }
 .admin-profile-menu button:hover, .admin-profile-menu a:hover { color: #78ff44; }
 @media (max-width: 640px) {
+  .orders-toolbar { grid-template-columns: 1fr; flex-wrap: wrap; }
   .admin-page-heading { align-items: flex-start; flex-direction: column; }
   .admin-page-actions { width: 100%; flex-wrap: wrap; }
 }
@@ -773,6 +774,11 @@
   color: #84d4a2;
   border-color: #2a5037;
 }
+.status-belum-bayar { background: #351f1c; color: #ffaaa3; border-color: #a24c43; }
+.status-lunas { background: #143726; color: #94eeac; border-color: #3b8250; }
+.admin-spk-status-button { background: transparent; border: 0; padding: 8px 0; cursor: pointer; }
+.admin-spk-payment-total { display: grid; gap: 8px; padding: 24px; margin: 24px 0; border: 1px solid var(--admin-green); border-radius: 10px; background: #163320; }
+.admin-spk-payment-total strong { font-size: clamp(26px, 4vw, 38px); color: var(--admin-accent); overflow-wrap: anywhere; }
 .admin-table-foot {
   padding: 13px 19px;
   display: flex;
@@ -930,6 +936,11 @@
   padding: 17px 20px;
   border-bottom: 1px solid #203928;
 }
+.orders-toolbar { display: grid; grid-template-columns: minmax(260px, 1.5fr) minmax(160px, 1fr) minmax(160px, 1fr) auto; flex-wrap: nowrap; }
+.orders-toolbar .admin-search { max-width: none; min-width: 0; }
+.spk-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) 220px; flex-wrap: nowrap; }
+.spk-toolbar > input { width: 100%; }
+@media (max-width: 640px) { .spk-toolbar { grid-template-columns: 1fr; flex-wrap: wrap; } }
 .admin-search {
   position: relative;
   flex: 1;

@@ -159,10 +159,6 @@ export function VehicleCatalog() {
           </Button>
         </div>
       )}
-      <p className="demo-note">
-        Koleksi, spesifikasi, harga RP, dan ketersediaan merupakan data
-        ilustratif prototype.
-      </p>
     </main>
   );
 }
@@ -254,12 +250,6 @@ export function VehicleDetail() {
           <Button onClick={() => currentMember() ? setModal("Ringkasan pemesanan") : navigate("/register")}>
             Pesan Sekarang <ArrowUpRight size={18} />
           </Button>
-          <Button secondary onClick={() => setModal("Konsultasi sales")}>
-            Hubungi Sales <ArrowUpRight size={18} />
-          </Button>
-          <p className="demo-note">
-            Prototype · Tidak ada transaksi atau pemesanan yang dikirim.
-          </p>
         </div>
       </div>
       {modal && (
