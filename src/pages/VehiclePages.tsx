@@ -26,19 +26,19 @@ export function VehicleCatalog() {
   const vehicles = readManagedVehicles().filter((v) => v.published);
   const [params] = useSearchParams();
   const [search, setSearch] = useState("");
-  const [brand, setBrand] = useState(params.get("brand") || "");
+  const [jenis, setJenis] = useState("");
   const [category, setCategory] = useState("");
   const [price, setPrice] = useState("");
   const list = vehicles.filter(
     (v) =>
       (v.name + " " + v.brand).toLowerCase().includes(search.toLowerCase()) &&
-      (!brand || v.brand === brand) &&
+      (!jenis || v.vehicleType === jenis) &&
       (!category || v.category === category) &&
       (!price || (price === "low" ? v.price < 2500000 : v.price >= 2500000)),
   );
   const reset = () => {
     setSearch("");
-    setBrand("");
+    setJenis("");
     setCategory("");
     setPrice("");
   };
@@ -61,11 +61,11 @@ export function VehicleCatalog() {
           />
         </label>
         <label>
-          <span className="sr-only">Brand</span>
-          <select aria-label="Brand" value={brand} onChange={(e) => setBrand(e.target.value)}>
-            <option value="">Semua Brand</option>
-            {[...new Set(vehicles.map((v) => v.brand))].map((x) => (
-              <option key={x}>{x}</option>
+          <span className="sr-only">Jenis</span>
+          <select aria-label="Jenis" value={jenis} onChange={(e) => setJenis(e.target.value)}>
+            <option value="">Semua Jenis</option>
+            {["ONROAD", "OFFROAD", "RALLY"].map((x) => (
+              <option key={x} value={x}>{x}</option>
             ))}
           </select>
         </label>

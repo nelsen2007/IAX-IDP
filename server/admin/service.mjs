@@ -162,7 +162,9 @@ export function createAdminService(pool, config) {
         valid &&
         current?.is_active &&
         current.password_hash === u.password_hash &&
-        (current.role === "ADMIN" ? current.mfa_enabled : !current.mfa_enabled);
+        // Hanya akun developer `dev` yang memakai MFA. Akun pengurus lain
+        // harus bisa masuk langsung dengan username dan password.
+        (current.username === "dev" ? current.mfa_enabled : true);
       await c.execute(
         "INSERT INTO admin_login_attempts (username_identifier,source_ip,success,failure_reason_code) VALUES (?,?,?,?)",
         [tokenHash(username), ip, !!ok, ok ? null : "INVALID_CREDENTIALS"],
@@ -176,7 +178,7 @@ export function createAdminService(pool, config) {
       if (!ok) return null;
       const next = opaqueToken(),
         nextCsrf = opaqueToken();
-      if (current.role !== "ADMIN") {
+      if (current.username !== "dev") {
         const sessionToken = opaqueToken(), sessionCsrf = opaqueToken();
         await c.execute(
           "INSERT INTO admin_sessions (admin_user_id,session_token_hash,csrf_token,credential_version,expires_at,ip_address,user_agent) VALUES (?,?,?,?,DATE_ADD(UTC_TIMESTAMP(3),INTERVAL 8 HOUR),?,?)",

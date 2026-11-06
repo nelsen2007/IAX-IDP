@@ -137,9 +137,16 @@ export function createApp({ pool, config }) {
       ip: req.ip,
       userAgent: req.get("user-agent"),
     });
-    res
-      .cookie(preauthName, p.token, { ...cookieOptions, maxAge: 5 * 60 * 1000 })
-      .json({ csrf: p.csrf, mfaRequired: true });
+    if (p.mfaRequired) {
+      res
+        .cookie(preauthName, p.token, { ...cookieOptions, maxAge: 5 * 60 * 1000 })
+        .json({ csrf: p.csrf, mfaRequired: true });
+    } else {
+      res
+        .clearCookie(preauthName, cookieOptions)
+        .cookie(sessionName, p.token, { ...cookieOptions, maxAge: 8 * 60 * 60 * 1000 })
+        .json({ csrf: p.csrf, mfaRequired: false });
+    }
   });
   api.post("/auth/mfa/verify", validate(verifySchema), async (req, res) => {
     const s = await service.verify({
@@ -158,6 +165,10 @@ export function createApp({ pool, config }) {
       .json({ csrf: s.csrf, user: s.user });
   });
   api.use(requireAdminAuth, requireCsrfProtection);
+  const requireStaffManager = (req, _res, next) => {
+    if (req.admin.user.role === "ADMIN" || req.admin.user.username === "dev") return next();
+    throw new AuthError(403, "Hanya Admin atau dev yang dapat mengelola pengurus.");
+  };
   api.get("/auth/me", (req, res) => res.json(req.admin));
   api.post(
     "/auth/logout",
@@ -188,7 +199,7 @@ export function createApp({ pool, config }) {
     clearSession(res);
     res.json({ ok: true });
   });
-  api.get("/staff", async (req, res) => {
+  api.get("/staff", requireStaffManager, async (req, res) => {
     res.json({ staff: await service.listStaff() });
   });
   api.post(
@@ -204,6 +215,7 @@ export function createApp({ pool, config }) {
         })
         .strict(),
     ),
+    requireStaffManager,
     async (req, res) => {
       const staff = await service.createStaff({
         ...req.body,
@@ -216,6 +228,7 @@ export function createApp({ pool, config }) {
   api.post(
     "/staff/remove",
     validate(z.object({ id: z.string().regex(/^\d+$/) }).strict()),
+    requireStaffManager,
     async (req, res) => {
       await service.removeStaff({ id: req.body.id, operator: req.admin.user.id, ip: req.ip });
       res.json({ ok: true });

@@ -81,7 +81,8 @@ function compressImage(file: File): Promise<string> {
       canvas.getContext("2d")?.drawImage(image, 0, 0, canvas.width, canvas.height);
       URL.revokeObjectURL(url);
       const result = canvas.toDataURL("image/webp", 0.78);
-      result ? resolve(result) : reject(new Error("Canvas conversion failed"));
+      if (result) resolve(result);
+      else reject(new Error("Canvas conversion failed"));
     };
     image.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Image load failed")); };
     image.src = url;
