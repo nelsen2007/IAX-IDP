@@ -165,7 +165,7 @@ export default function ReportsPage() {
             <span className="admin-small-label">{rows.length} KENDARAAN</span>
           </div>
           <AdminDataTable headers={["Kendaraan", "Jumlah Pemesanan", "Total Nilai Pesanan", "Status"]} empty={!rows.length}>
-            {sorted.map((o) => <tr key={o.id}><td><div className="admin-vehicle-cell"><img src={o.image} alt="" /><div><strong>{o.vehicle}</strong><small>{o.brand}</small></div></div></td><td><div className="admin-bar-track" aria-label={`${o.vehicle}: 1 pemesanan`}><span /></div>1 pesanan</td><td className="admin-nowrap">{priceLabel(o.price, o.currency)}</td><td><StatusBadge status={o.status} /></td></tr>)}
+            {sorted.map((o) => <tr key={o.id}><td><div className="admin-vehicle-cell"><div><strong>{o.vehicle}</strong><small>{o.brand}</small></div></div></td><td><div className="admin-bar-track" aria-label={`${o.vehicle}: 1 pemesanan`}><span /></div>1 pesanan</td><td className="admin-nowrap">{priceLabel(o.price, o.currency)}</td><td><StatusBadge status={o.status} /></td></tr>)}
           </AdminDataTable>
           <div className="admin-table-foot">Nilai diambil dari data pesanan yang tersimpan.</div>
         </section>

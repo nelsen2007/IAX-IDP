@@ -15,11 +15,14 @@ export default function OrderConfirmation({ vehicle }: { vehicle: ManagedVehicle
     if (!member) { setError("Silakan login sebagai member untuk membuat pesanan."); return; }
     if (!Number.isInteger(quantity) || quantity < 1 || quantity > 5) { setError("Jumlah pembelian harus 1–5 unit."); return; }
     try {
-      const orders = JSON.parse(localStorage.getItem("iax-member-orders") || "[]");
+      // Jangan menyalin Base64 foto kendaraan ke setiap pesanan. Foto cukup
+      // diambil dari katalog berdasarkan slug agar localStorage tidak penuh.
+      const stored = JSON.parse(localStorage.getItem("iax-member-orders") || "[]");
+      const orders = Array.isArray(stored) ? stored.map(({ image: _image, ...order }) => order) : [];
       const now = new Date();
       const date = new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", day: "2-digit", month: "2-digit", year: "2-digit" }).format(now);
       const id = `${String(orders.length + 1).padStart(4, "0")} - ${date}`;
-      orders.push({ id, memberId: member.id, member: member.name, phone: member.phone, steamhex: member.steamhex, vehicle: vehicle.name, image: vehicle.photos?.[0] || vehicle.image, slug: vehicle.slug, quantity, unitPrice: vehicle.price, total, currency: vehicle.jenis === "IMPORT" ? "E MAS" : "IDP $", status: "Baru", createdAt: new Date().toISOString() });
+      orders.push({ id, memberId: member.id, member: member.name, phone: member.phone, steamhex: member.steamhex, vehicle: vehicle.name, slug: vehicle.slug, quantity, unitPrice: vehicle.price, total, currency: vehicle.jenis === "IMPORT" ? "E MAS" : "IDP $", status: "Baru", createdAt: new Date().toISOString() });
       localStorage.setItem("iax-member-orders", JSON.stringify(orders));
       window.dispatchEvent(new Event("iax-orders-updated"));
       setCreated(id);

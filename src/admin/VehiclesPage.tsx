@@ -37,7 +37,53 @@ function VehicleDrawer({ initial, vehicles, onClose, onSaved }: { initial: Manag
   const [form, setForm] = useState<Omit<ManagedVehicle, "slug" | "createdAt">>(initial ? { ...initial } : blank);
   const [error, setError] = useState(""); const [photoSlot, setPhotoSlot] = useState(0); const file = useRef<HTMLInputElement>(null);
   const update = (key: keyof typeof form, value: string | number | boolean | string[]) => setForm((x) => ({ ...x, [key]: value }));
-  function upload(e: React.ChangeEvent<HTMLInputElement>) { const f = e.target.files?.[0]; if (!f) return; if (f.size > 2.5 * 1024 * 1024) { setError("Ukuran gambar maksimal 2.5 MB."); return; } if (!f.type.startsWith("image/")) { setError("File harus berupa gambar."); return; } const reader = new FileReader(); reader.onload = () => { const value = String(reader.result); const next = [...(form.photos || [])]; next[photoSlot] = value; update("photos", next); if (photoSlot === 0) update("image", value); }; reader.readAsDataURL(f); setError(""); }
-  function submit(e: FormEvent) { e.preventDefault(); if (!form.name.trim()) return setError("Nama model wajib diisi."); const slug = initial?.slug || vehicleSlug(form.name); const item = { ...form, slug, createdAt: initial?.createdAt || new Date().toISOString() } as ManagedVehicle; onSaved(initial ? vehicles.map((v) => v.slug === initial.slug ? item : v) : [item, ...vehicles]); }
+  async function upload(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    if (f.size > 2.5 * 1024 * 1024) return setError("Ukuran gambar maksimal 2.5 MB.");
+    if (!f.type.startsWith("image/")) return setError("File harus berupa gambar.");
+    setError("");
+    try {
+      const value = await compressImage(f);
+      const next = [...(form.photos || [])];
+      next[photoSlot] = value;
+      update("photos", next);
+      if (photoSlot === 0) update("image", value);
+    } catch {
+      setError("Foto tidak dapat diproses. Pilih file gambar lain.");
+    }
+  }
+  function submit(e: FormEvent) {
+    e.preventDefault();
+    if (!form.name.trim()) return setError("Nama model wajib diisi.");
+    const slug = initial?.slug || vehicleSlug(form.name);
+    const item = { ...form, slug, createdAt: initial?.createdAt || new Date().toISOString() } as ManagedVehicle;
+    try {
+      onSaved(initial ? vehicles.map((v) => v.slug === initial.slug ? item : v) : [item, ...vehicles]);
+    } catch {
+      setError("Kendaraan gagal disimpan. Ukuran total foto terlalu besar; hapus atau kecilkan salah satu foto.");
+    }
+  }
   return <Drawer title={initial ? "Edit kendaraan" : "Tambah kendaraan"} onClose={onClose} wide><form className="admin-form vehicle-form" onSubmit={submit}><div className="vehicle-form-grid"><label>Nama model<input value={form.name} onChange={(e) => update("name", e.target.value)} required placeholder="Contoh: 911 GT3 RS" /></label><label>Jenis<select value={form.jenis} onChange={(e) => update("jenis", e.target.value)}><option value="IMPORT">IMPORT — E MAS</option><option value="DEALER">DEALER — IDP $</option></select></label><label>Type<select value={form.vehicleType} onChange={(e) => update("vehicleType", e.target.value)}><option value="ONROAD">ONROAD</option><option value="OFFROAD">OFFROAD</option><option value="RALLY">RALLY</option></select></label><label>Kategori<input value={form.category} onChange={(e) => update("category", e.target.value)} placeholder="Sports Car" /></label><label>Nominal harga<input type="number" min="0" value={form.price || ""} onChange={(e) => update("price", Number(e.target.value))} /></label><label>Jumlah kursi<input type="number" min="1" value={form.seats || ""} onChange={(e) => update("seats", Number(e.target.value))} /></label></div><label>Deskripsi<textarea rows={4} value={form.description} onChange={(e) => update("description", e.target.value)} placeholder="Ceritakan karakter kendaraan…" /></label><div className="image-upload"><span className="upload-label">Foto kendaraan <small>Foto 1 menjadi hero picture · JPG, PNG, WEBP · maksimal 2.5 MB per foto</small></span><input ref={file} hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={upload} /><div className="vehicle-photo-slots">{[0, 1, 2].map((slot) => { const photo = form.photos?.[slot] || (slot === 0 ? form.image : ""); return <div className="vehicle-photo-slot" key={slot}><button type="button" className="upload-dropzone" onClick={() => { setPhotoSlot(slot); file.current?.click(); }}>{photo ? <img src={photo} alt={`Preview foto ${slot + 1}`} /> : <><ImagePlus size={25} /><span>Foto {slot + 1}{slot === 0 ? " · Hero" : ""}</span><small>Maks. 2.5 MB</small></>}</button>{photo && <button type="button" className="remove-image" onClick={() => { const next = [...(form.photos || [])]; next[slot] = ""; update("photos", next); if (slot === 0) update("image", ""); }}><X size={14} /> Hapus</button>}</div>; })}</div></div><label className="toggle-field"><input type="checkbox" checked={form.published} onChange={(e) => update("published", e.target.checked)} /><span><strong>Tampilkan di halaman publik</strong><small>Matikan untuk menyimpan sebagai draft.</small></span></label>{error && <p className="admin-error" role="alert">{error}</p>}<div className="admin-drawer-actions"><button type="button" className="admin-button" onClick={onClose}>Batal</button><button className="admin-button primary"><Upload size={15} /> Simpan kendaraan</button></div></form></Drawer>;
+}
+
+function compressImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      const max = 1400;
+      const scale = Math.min(1, max / Math.max(image.naturalWidth, image.naturalHeight));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+      canvas.getContext("2d")?.drawImage(image, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      const result = canvas.toDataURL("image/webp", 0.78);
+      result ? resolve(result) : reject(new Error("Canvas conversion failed"));
+    };
+    image.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Image load failed")); };
+    image.src = url;
+  });
 }
