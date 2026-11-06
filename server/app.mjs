@@ -97,7 +97,7 @@ export function createApp({ pool, config }) {
     .object({
       oldPassword: password,
       newPassword: z.string().min(15).max(1024),
-      code: factor,
+      code: factor.optional(),
     })
     .strict();
   const requireAdminAuth = async (req, res, next) => {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import {
   Link,
   NavLink,
@@ -54,6 +54,8 @@ export default function AdminApp() {
   const [mobile, setMobile] = useState(false),
     [notification, setNotification] = useState(false),
     [loggingOut, setLoggingOut] = useState(false);
+  const [profileMenu, setProfileMenu] = useState(false),
+    [passwordPopup, setPasswordPopup] = useState(false);
   const isLogin = location.pathname === "/admin/login";
   const refresh = useCallback(async () => {
     try {
@@ -141,12 +143,16 @@ export default function AdminApp() {
     );
   const active =
     menus.find((m) => m.to === location.pathname)?.label || "OVERVIEW";
+  const isDeveloper = session.user.username === "dev";
+  const visibleMenus = menus.filter(
+    (menu) => menu.to !== "/admin/settings" || isDeveloper,
+  );
   const navigation = (
     <>
       <AdminBrand />
       <div className="admin-nav-label">WORKSPACE</div>
       <nav aria-label="Navigasi admin">
-        {menus.map(({ to, label, icon: Icon }) => (
+        {visibleMenus.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
@@ -222,13 +228,14 @@ export default function AdminApp() {
             >
               <Bell size={18} />
             </button>
-            <Link
-              to="/admin/settings"
-              className="admin-avatar"
-              aria-label="Pengaturan akun"
-            >
-              {session.user.displayName.slice(0, 2).toUpperCase()}
-            </Link>
+            <button className="admin-avatar" aria-label="Buka menu profil" onClick={() => setProfileMenu(!profileMenu)}>
+                {session.user.displayName.slice(0, 2).toUpperCase()}
+            </button>
+            {profileMenu && <div className="admin-profile-menu">
+              <strong>{session.user.displayName}</strong>
+              <button onClick={() => { setPasswordPopup(true); setProfileMenu(false); }}>Ganti password</button>
+              {isDeveloper && <Link to="/admin/settings" onClick={() => setProfileMenu(false)}>Pengaturan</Link>}
+            </div>}
           </div>
           {notification && (
             <div className="admin-notification" role="status">
@@ -257,18 +264,20 @@ export default function AdminApp() {
             <Route
               path="settings"
               element={
-                <SettingsPage
-                  session={session}
-                  onRevoked={() => {
-                    setSession(null);
-                    navigate("/admin/login", {
-                      replace: true,
-                      state: {
-                        reason: "Sesi telah dicabut. Silakan login kembali.",
-                      },
-                    });
-                  }}
-                />
+                isDeveloper ? (
+                  <SettingsPage
+                    session={session}
+                    onRevoked={() => {
+                      setSession(null);
+                      navigate("/admin/login", {
+                        replace: true,
+                        state: { reason: "Sesi telah dicabut. Silakan login kembali." },
+                      });
+                    }}
+                  />
+                ) : (
+                  <Navigate to="/admin" replace />
+                )
               }
             />
             <Route
@@ -287,6 +296,20 @@ export default function AdminApp() {
           </footer>
         </main>
       </div>
+      {passwordPopup && <StaffPasswordDrawer session={session} onClose={() => setPasswordPopup(false)} onRevoked={() => { setSession(null); navigate("/admin/login", { replace: true }); }} />}
     </div>
   );
+}
+
+function StaffPasswordDrawer({ session, onClose, onRevoked }: { session: AdminSession; onClose: () => void; onRevoked: () => void }) {
+  const [oldPassword, setOld] = useState(""), [newPassword, setNew] = useState(""), [confirm, setConfirm] = useState(""), [error, setError] = useState(""), [busy, setBusy] = useState(false);
+  async function submit(e: FormEvent) {
+    e.preventDefault(); setError("");
+    if (newPassword !== confirm) { setError("Konfirmasi password baru berbeda."); return; }
+    setBusy(true);
+    try { await adminApi("change-password", { csrf: session.csrf, body: { oldPassword, newPassword } }); onRevoked(); }
+    catch (e) { setError(e instanceof Error ? e.message : "Password gagal diubah."); }
+    finally { setBusy(false); }
+  }
+  return <Drawer title="Ganti password" onClose={() => !busy && onClose()}><form className="admin-form" onSubmit={submit}><label>Password lama<input type="password" value={oldPassword} onChange={(e) => setOld(e.target.value)} required /></label><label>Password baru<input type="password" value={newPassword} onChange={(e) => setNew(e.target.value)} required /></label><label>Konfirmasi password baru<input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required /></label>{error && <p className="admin-error" role="alert">{error}</p>}<button className="admin-button primary" disabled={busy}>{busy ? "Menyimpan…" : "Simpan password"}</button></form></Drawer>;
 }

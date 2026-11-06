@@ -534,6 +534,21 @@
 .admin-page-heading h1 { margin: 5px 0 8px; }
 .admin-page-heading p { margin: 0; color: #92ab9a; font-size: 12px; }
 .admin-page-actions { display: flex; align-items: center; gap: 12px; }
+.admin-profile-menu {
+  position: absolute;
+  top: 58px;
+  right: 22px;
+  z-index: 20;
+  min-width: 190px;
+  padding: 12px;
+  border: 1px solid #31543b;
+  border-radius: 9px;
+  background: #0b1b12;
+  box-shadow: 0 14px 35px #0008;
+}
+.admin-profile-menu strong { display: block; color: #e7f4e6; font-size: 11px; margin-bottom: 8px; }
+.admin-profile-menu button, .admin-profile-menu a { display: block; width: 100%; padding: 9px 0; color: #a9c39d; background: none; border: 0; text-align: left; font: inherit; font-size: 10px; cursor: pointer; }
+.admin-profile-menu button:hover, .admin-profile-menu a:hover { color: #78ff44; }
 @media (max-width: 640px) {
   .admin-page-heading { align-items: flex-start; flex-direction: column; }
   .admin-page-actions { width: 100%; flex-wrap: wrap; }

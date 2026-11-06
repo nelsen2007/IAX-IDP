@@ -341,10 +341,9 @@ export function createAdminService(pool, config) {
     await throttle(`reauth:${who.user.id}:${ip}`, 10, true);
     const result = await tx(async (c) => {
       const { u } = await lockedSession(c, token, csrf);
-      if (
-        !(await verifyPassword(u.password_hash, input.oldPassword)) ||
-        !(await consumeFactor(c, u, input.code))
-      ) {
+      const passwordValid = await verifyPassword(u.password_hash, input.oldPassword);
+      const factorValid = u.role === "ADMIN" ? await consumeFactor(c, u, input.code) : true;
+      if (!passwordValid || !factorValid) {
         await audit(c, u.id, "reauth_failed", ip);
         return false;
       }
@@ -364,7 +363,8 @@ export function createAdminService(pool, config) {
   }
   async function changePassword(token, csrf, input, ip) {
     try {
-      validatePassword(input.newPassword);
+      if (input.newPassword.length < 1 || input.newPassword.length > 1024)
+        throw new Error("Password baru wajib diisi.");
     } catch (e) {
       throw new AuthError(400, e.message);
     }
