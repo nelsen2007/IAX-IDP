@@ -212,6 +212,13 @@ form {
   gap: 23px;
   font-size: 12px;
 }
+.member-profile-wrap { position: relative; }
+.member-profile-button { display:flex; align-items:center; gap:8px; border:0; background:none; color:#fff; font:inherit; cursor:pointer; }
+.member-profile-button span { width:32px; height:32px; display:grid; place-items:center; border-radius:50%; background:var(--green); color:#061006; font-weight:700; font-size:11px; }
+.member-profile-menu { position:absolute; right:0; top:calc(100% + 10px); z-index:30; width:190px; padding:12px; display:grid; gap:5px; background:#10251a; border:1px solid #31543b; border-radius:8px; box-shadow:0 12px 30px #0008; }
+.member-profile-menu strong { padding:5px 8px 9px; border-bottom:1px solid #2b4633; }
+.member-profile-menu button { text-align:left; border:0; background:none; color:#d7e4da; padding:9px 8px; cursor:pointer; border-radius:5px; }
+.member-profile-menu button:hover { background:#193123; }
 .icon-button {
   display: inline-flex;
   justify-content: center;
@@ -299,6 +306,14 @@ form {
   position: relative;
   max-width: 680px;
   margin-top: clamp(90px, 12vh, 190px);
+}
+.member-welcome {
+  font-family: "Barlow Condensed", sans-serif;
+  color: #fff;
+  font-size: clamp(22px, 2.3vw, 40px);
+  font-weight: 600;
+  letter-spacing: 4px;
+  margin: 18px 0 8px;
 }
 .eyebrow {
   display: flex;
@@ -1149,9 +1164,10 @@ form {
   background: #000b;
   backdrop-filter: blur(7px);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 25px;
+  overflow-y: auto;
 }
 .modal {
   width: 560px;
@@ -1163,6 +1179,7 @@ form {
   border-radius: 8px;
   padding: 28px;
   box-shadow: 0 40px 100px #0009;
+  margin: 5vh auto;
 }
 .modal > .section-line {
   margin-bottom: 24px;
@@ -1181,6 +1198,12 @@ form {
   margin: 22px 0;
   font-size: 13px;
 }
+.order-confirmation { display: grid; gap: 18px; }
+.order-confirmation label { display: grid; gap: 8px; }
+.order-confirmation input, .order-confirmation select { width: 100%; padding: 12px; border: 1px solid #36533d; border-radius: 6px; background: #102119; color: white; }
+.sales-suggestions { display: grid; max-height: 160px; overflow-y: auto; }
+.sales-suggestions button { padding: 12px; text-align: left; background: #14281b; color: white; border: 1px solid #294a33; cursor: pointer; }
+.sales-suggestions button:hover { background: #254332; }
 .summary-box > strong {
   font-size: 22px;
   color: #fff;

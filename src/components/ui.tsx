@@ -1,6 +1,8 @@
 import { brandAssets } from "../data/brand";
 import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { Link, NavLink, useLocation, useSearchParams } from "react-router-dom";
+import { currentMember, logoutMember, updateCurrentMember, type RegisteredMember } from "../data/members";
 import {
   ArrowUpRight,
   Menu,
@@ -130,8 +132,11 @@ const nav = [
 ];
 export function Header() {
   const [open, setOpen] = useState(false);
+  const [member, setMember] = useState<RegisteredMember | null>(currentMember);
+  const [profile, setProfile] = useState(false);
+  const [editing, setEditing] = useState(false);
   const loc = useLocation();
-  useEffect(() => setOpen(false), [loc]);
+  useEffect(() => { setOpen(false); setMember(currentMember()); }, [loc]);
   return (
     <header className="header">
       <div className="nav-wrap">
@@ -145,9 +150,7 @@ export function Header() {
               {label}
             </NavLink>
           ))}
-          <Link className="mobile-login" to="/login">
-            Masuk Member <ArrowUpRight size={16} />
-          </Link>
+          {!member && <Link className="mobile-login" to="/login">Masuk Member <ArrowUpRight size={16} /></Link>}
         </nav>
         <div className="nav-actions">
           <Link
@@ -157,12 +160,7 @@ export function Header() {
           >
             <Search size={19} />
           </Link>
-          <Link className="login-link" to="/login">
-            Masuk
-          </Link>
-          <Link className="nav-register" to="/register">
-            Daftar Member <ArrowUpRight size={15} />
-          </Link>
+          {member ? <div className="member-profile-wrap"><button className="member-profile-button" onClick={() => setProfile(!profile)} aria-expanded={profile}><span>{member.name.slice(0, 2).toUpperCase()}</span>{member.name}</button>{profile && <div className="member-profile-menu"><strong>{member.name}</strong><button onClick={() => { setEditing(true); setProfile(false); }}>Edit profil</button><button onClick={() => { logoutMember(); setMember(null); setProfile(false); }}>Keluar</button></div>}</div> : <><Link className="login-link" to="/login">Masuk</Link><Link className="nav-register" to="/register">Daftar Member <ArrowUpRight size={15} /></Link></>}
           <button
             className="menu-toggle icon-button"
             aria-label={open ? "Tutup menu" : "Buka menu"}
@@ -173,8 +171,13 @@ export function Header() {
           </button>
         </div>
       </div>
+      {editing && member && <MemberProfileModal member={member} onClose={() => setEditing(false)} onSaved={(next) => { setMember(next); setEditing(false); }} />}
     </header>
   );
+}
+
+function MemberProfileModal({ member, onClose, onSaved }: { member: RegisteredMember; onClose: () => void; onSaved: (member: RegisteredMember) => void }) {
+  return createPortal(<Modal title="Profil member" onClose={onClose}><form onSubmit={(e) => { e.preventDefault(); const data = new FormData(e.currentTarget); const next = updateCurrentMember({ name: String(data.get("name")), phone: String(data.get("phone")), steamhex: String(data.get("steamhex")), password: String(data.get("password")) || member.password }); if (next) onSaved(next); }}><label>Nama<input name="name" defaultValue={member.name} required /></label><label>Nomor hape<input name="phone" defaultValue={member.phone} required /></label><label>SteamHEX<input name="steamhex" defaultValue={member.steamhex} required /></label><label>Password baru<input name="password" type="password" placeholder="Kosongkan jika tidak diubah" minLength={6} /></label><button className="button" type="submit">Simpan perubahan</button></form></Modal>, document.body);
 }
 export function Footer() {
   return (

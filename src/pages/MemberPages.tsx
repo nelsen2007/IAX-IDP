@@ -8,7 +8,7 @@ import {
   EyeOff,
 } from "lucide-react";
 import { Brand, Button, PageHeader } from "../components/ui";
-import { currentMember, findMember, saveRegisteredMember } from "../data/members";
+import { currentMember, findMember, saveRegisteredMember, setCurrentMember } from "../data/members";
 export function AuthPage({ register = false }: { register?: boolean }) {
   const navigate = useNavigate();
   const [show, setShow] = useState(false);
@@ -50,8 +50,8 @@ export function AuthPage({ register = false }: { register?: boolean }) {
                 const member = { id: `MBR-${Date.now().toString().slice(-6)}`, name: String(data.get("name")), citizen: `IDP-${Math.floor(100000 + Math.random() * 900000)}`, phone, steamhex: String(data.get("steamhex")), password, joined: new Date().toISOString(), orders: 0, active: true };
                 saveRegisteredMember(member);
                 navigate("/member/dashboard");
-              } else if (findMember(phone, password)) navigate("/member/dashboard");
-              else window.alert("Nomor hape atau password tidak sesuai.");
+              } else { const member = findMember(phone, password); if (member) { setCurrentMember(member); navigate("/member/dashboard"); } }
+              if (!register && !findMember(phone, password)) window.alert("Nomor hape atau password tidak sesuai.");
             }}
           >
             {register && (
@@ -131,7 +131,7 @@ export function MemberDashboard() {
       <div className="section-line">
         <PageHeader
           eyebrow="MEMBER AREA"
-          title="Area member"
+          title={member ? `WELCOME, ${member.name}` : "Area member"}
           description={member ? `Selamat datang, ${member.name}.` : "Belum ada data member yang terdaftar."}
         />
         <span className="member-tag">

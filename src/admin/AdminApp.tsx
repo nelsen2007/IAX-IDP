@@ -261,7 +261,7 @@ export default function AdminApp() {
             />
             <Route path="orders" element={<OrdersPage />} />
             <Route path="spk" element={<SPKPage />} />
-            <Route path="members" element={<MembersPage />} />
+            <Route path="members" element={<MembersPage session={session} />} />
             <Route path="staff" element={<StaffPage session={session} />} />
             <Route path="vehicles" element={<VehiclesPage canManage={session.user.role === "ADMIN"} />} />
             <Route path="reports" element={<ReportsPage />} />

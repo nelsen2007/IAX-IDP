@@ -16,6 +16,9 @@ import {
   CheckCheck,
   XCircle,
   Car,
+  Archive,
+  Edit3,
+  Trash2,
 } from "lucide-react";
 import {
   AdminDataTable,
@@ -36,7 +39,8 @@ import {
   type DemoMember,
   type DemoSpk,
 } from "./data";
-import { readRegisteredMembers } from "../data/members";
+import { archiveRegisteredMember, readArchivedMembers, readRegisteredMembers, updateRegisteredMember, type RegisteredMember } from "../data/members";
+import type { AdminSession } from "./api";
 
 function OrderRows({
   rows,
@@ -596,12 +600,15 @@ export function SPKPage() {
   );
 }
 
-export function MembersPage() {
+export function MembersPage({ session }: { session: AdminSession }) {
   const [search, setSearch] = useState(""),
-    [selected, setSelected] = useState<DemoMember | null>(null);
-  const members = [...demoMembers, ...readRegisteredMembers()];
+    [selected, setSelected] = useState<DemoMember | null>(null),
+    [editing, setEditing] = useState<RegisteredMember | null>(null),
+    [archiveOpen, setArchiveOpen] = useState(false),
+    [archiveSearch, setArchiveSearch] = useState("");
+  const members = [...demoMembers.map((m) => ({ ...m, steamhex: "—" })), ...readRegisteredMembers()];
   const rows = members.filter((m) =>
-    (m.name + m.id + m.citizen).toLowerCase().includes(search.toLowerCase()),
+    (m.name + m.id + m.steamhex).toLowerCase().includes(search.toLowerCase()),
   );
   const history = demoOrders.filter((o) => o.citizen === selected?.citizen);
   return (
@@ -645,14 +652,14 @@ export function MembersPage() {
             <h2>Daftar member</h2>
             <p>Data member terdaftar</p>
           </div>
-          <Users size={18} />
+          <div className="admin-panel-heading-actions"><button className="admin-icon" aria-label="Buka arsip member" title="Arsip member" onClick={() => setArchiveOpen(true)}><Archive size={18} /></button></div>
         </div>
         <div className="admin-toolbar">
           <label className="admin-search">
             <Search size={17} />
             <input
               aria-label="Cari member"
-              placeholder="Cari nama, member ID, Citizen ID…"
+              placeholder="Cari nama, member ID, SteamHEX…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -660,9 +667,8 @@ export function MembersPage() {
         </div>
         <AdminDataTable
           headers={[
-            "Member ID",
             "Nama Karakter",
-            "Citizen ID",
+            "STEAMHEX",
             "Telepon RP",
             "Tanggal Daftar",
             "Total Pesanan",
@@ -672,16 +678,16 @@ export function MembersPage() {
         >
           {rows.map((m) => (
             <tr key={m.id}>
-              <td className="admin-mono">{m.id}</td>
               <td>
                 <strong>{m.name}</strong>
                 <small>{m.active ? "Aktif" : "Tidak aktif"}</small>
               </td>
-              <td>{m.citizen}</td>
+              <td>{m.steamhex}</td>
               <td>{m.phone}</td>
               <td className="admin-nowrap">{dateLabel(m.joined)}</td>
               <td>{m.orders}</td>
               <td>
+                {session.user.role === "ADMIN" && "password" in m && <><button className="admin-row-button" aria-label={`Edit ${m.name}`} onClick={() => setEditing(m as RegisteredMember)}><Edit3 size={15} /></button><button className="admin-row-button danger-icon" aria-label={`Hapus ${m.name}`} onClick={() => { archiveRegisteredMember(m.id); setSelected(null); window.location.reload(); }}><Trash2 size={15} /></button></>}
                 <button
                   className="admin-row-button"
                   aria-label={"Detail member " + m.name}
@@ -699,7 +705,6 @@ export function MembersPage() {
       </section>
       {selected && (
         <Drawer title="Detail Member" onClose={() => setSelected(null)}>
-          <DemoNotice />
           <div className="admin-member-profile">
             <span className="admin-avatar">
               {selected.name.slice(0, 2).toUpperCase()}
@@ -709,7 +714,7 @@ export function MembersPage() {
           </div>
           <DetailList
             items={[
-              ["Citizen ID", selected.citizen],
+              ["STEAMHEX", "steamhex" in selected ? String(selected.steamhex) : "—"],
               ["Telepon RP", selected.phone],
               ["Bergabung", dateLabel(selected.joined)],
               [
@@ -744,6 +749,8 @@ export function MembersPage() {
           </div>
         </Drawer>
       )}
+      {archiveOpen && <Drawer title="Arsip member" onClose={() => setArchiveOpen(false)}><input aria-label="Cari arsip member" placeholder="Cari nama atau SteamHEX…" value={archiveSearch} onChange={(e) => setArchiveSearch(e.target.value)} />{readArchivedMembers().filter((m) => `${m.name} ${m.steamhex}`.toLowerCase().includes(archiveSearch.toLowerCase())).map((m) => <div className="admin-history" key={m.id}><strong>{m.name}</strong><span>{m.steamhex}</span></div>)}</Drawer>}
+      {editing && <Drawer title="Edit member" onClose={() => setEditing(null)}><form className="admin-form" onSubmit={(e) => { e.preventDefault(); const d = new FormData(e.currentTarget); const password = String(d.get("password")); updateRegisteredMember(editing.id, { name: String(d.get("name")), phone: String(d.get("phone")), steamhex: String(d.get("steamhex")), ...(password ? { password } : {}) }); setEditing(null); window.location.reload(); }}><label>Nama<input name="name" defaultValue={editing.name} required /></label><label>Nomor hape<input name="phone" defaultValue={editing.phone} required /></label><label>SteamHEX<input name="steamhex" defaultValue={editing.steamhex} required /></label><label>Password baru<small>Kosongkan jika tidak ingin mengubah password.</small><input name="password" type="password" minLength={6} placeholder="Masukkan password baru" /></label><button className="admin-button primary">Simpan perubahan</button></form></Drawer>}
     </>
   );
 }

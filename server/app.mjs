@@ -54,6 +54,10 @@ export function createApp({ pool, config }) {
     next();
   });
   app.use(cookieParser());
+  app.get("/api/sales", async (_req, res) => {
+    const [rows] = await pool.execute("SELECT id,name FROM staff_accounts WHERE role='SALES' AND is_active=TRUE ORDER BY name");
+    res.set("Cache-Control", "no-store").json({ sales: rows.map((row) => ({ id: String(row.id), name: row.name })) });
+  });
   app.use(express.json({ limit: "8kb", strict: true }));
   const cookieOptions = {
     httpOnly: true,

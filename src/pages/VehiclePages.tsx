@@ -14,6 +14,8 @@ import {
   CarFront,
 } from "lucide-react";
 import { readManagedVehicles } from "../data/vehicles";
+import { currentMember } from "../data/members";
+import OrderConfirmation from "../components/OrderConfirmation";
 import { Button, Modal, PageHeader } from "../components/ui";
 
 function PublicPrice({ vehicle }: { vehicle: ReturnType<typeof readManagedVehicles>[number] }) {
@@ -249,7 +251,7 @@ export function VehicleDetail() {
               <span>Transmisi</span>
             </div>
           </div>
-          <Button onClick={() => navigate("/register")}>
+          <Button onClick={() => currentMember() ? setModal("Ringkasan pemesanan") : navigate("/register")}>
             Pesan Sekarang <ArrowUpRight size={18} />
           </Button>
           <Button secondary onClick={() => setModal("Konsultasi sales")}>
@@ -262,20 +264,20 @@ export function VehicleDetail() {
       </div>
       {modal && (
         <Modal title={modal} onClose={() => setModal("")}>
+          {modal === "Ringkasan pemesanan" ? <OrderConfirmation vehicle={v} /> : <>
           <p>
             {modal === "Konsultasi sales"
               ? "Tim sales akan membantu konsultasi model, varian, dan alur SPK. Layanan kontak belum diaktifkan dalam prototype."
               : "Tinjau kendaraan pilihanmu. Tampilan ini hanya simulasi; pesanan tidak dikirim atau disimpan."}
           </p>
           <div className="summary-box">
+            {modal === "Ringkasan pemesanan" && currentMember() && <><span>Nama: {currentMember()?.name}</span><span>Nomor hape: {currentMember()?.phone}</span><span>SteamHEX: {currentMember()?.steamhex}</span></>}
             <b>
               {v.brand} {v.name}
             </b>
             <strong><PublicPrice vehicle={v} /></strong>
           </div>
-          <Button to="/member/dashboard">
-            Lihat Demo Member <ArrowUpRight size={16} />
-          </Button>
+          </>}
         </Modal>
       )}
     </main>
