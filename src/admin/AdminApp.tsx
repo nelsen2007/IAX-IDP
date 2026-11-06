@@ -21,6 +21,7 @@ import {
   ShieldCheck,
   LoaderCircle,
   UserCog,
+  CarFront,
 } from "lucide-react";
 import AdminLoginPage from "./LoginPage";
 import { AdminBrand, Drawer } from "./components";
@@ -34,6 +35,7 @@ import {
 import ReportsPage from "./ReportsPage";
 import SettingsPage from "./SettingsPage";
 import StaffPage from "./StaffPage";
+import VehiclesPage from "./VehiclesPage";
 import { demoOrders } from "./data";
 import "./admin.css";
 
@@ -42,6 +44,7 @@ const menus = [
   { to: "/admin/spk", label: "SPK", icon: FileText },
   { to: "/admin/members", label: "MEMBER", icon: Users },
   { to: "/admin/staff", label: "PENGURUS", icon: UserCog },
+  { to: "/admin/vehicles", label: "KENDARAAN", icon: CarFront },
   { to: "/admin/reports", label: "LAPORAN", icon: ChartNoAxesCombined },
   { to: "/admin/settings", label: "PENGATURAN", icon: Settings },
 ];
@@ -145,7 +148,7 @@ export default function AdminApp() {
     menus.find((m) => m.to === location.pathname)?.label || "OVERVIEW";
   const isDeveloper = session.user.username === "dev";
   const visibleMenus = menus.filter(
-    (menu) => menu.to !== "/admin/settings" || isDeveloper,
+    (menu) => (menu.to !== "/admin/settings" || isDeveloper) && (menu.to !== "/admin/vehicles" || session.user.role === "ADMIN"),
   );
   const navigation = (
     <>
@@ -260,6 +263,7 @@ export default function AdminApp() {
             <Route path="spk" element={<SPKPage />} />
             <Route path="members" element={<MembersPage />} />
             <Route path="staff" element={<StaffPage session={session} />} />
+            <Route path="vehicles" element={<VehiclesPage canManage={session.user.role === "ADMIN"} />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route
               path="settings"

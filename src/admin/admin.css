@@ -118,6 +118,32 @@
   background: #241816;
   border-color: #63352f;
 }
+.vehicle-manager { padding: 22px; }
+.vehicle-manager-toolbar { display:flex; justify-content:space-between; gap:18px; align-items:center; margin-bottom:18px; }
+.vehicle-manager-toolbar p { color:var(--admin-muted); margin:6px 0 0; font-size:12px; }
+.vehicle-manager-toolbar input { width:220px; }
+.vehicle-thumb { width:54px; height:40px; border-radius:6px; overflow:hidden; display:grid; place-items:center; color:var(--admin-muted); background:#172c20; flex:none; }
+.vehicle-thumb img { width:100%; height:100%; object-fit:cover; }
+.admin-row-actions { display:flex; gap:6px; }
+.danger-icon { color:#f6a5a5; }
+.vehicle-form { gap:16px; }
+.vehicle-form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.image-upload { display:grid; gap:9px; }
+.upload-label { color:#c3d0c7; font-size:12px; font-weight:500; }
+.upload-label small { display:block; margin-top:4px; color:var(--admin-muted); font-weight:400; }
+.upload-dropzone { min-height:150px; border:1px dashed #46664e; border-radius:8px; background:#09160e; color:#b8cabd; display:grid; place-items:center; align-content:center; gap:5px; cursor:pointer; }
+.upload-dropzone:hover { border-color:var(--admin-accent); background:#10251a; }
+.upload-dropzone img { width:100%; height:190px; object-fit:cover; border-radius:7px; }
+.vehicle-photo-slots { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.vehicle-photo-slot .upload-dropzone { min-height:110px; padding:8px; text-align:center; }
+.vehicle-photo-slot .upload-dropzone img { height:105px; }
+.upload-dropzone small { color:#81998a; }
+.remove-image { justify-self:start; border:0; background:none; color:#f6a5a5; padding:0; display:flex; align-items:center; gap:5px; cursor:pointer; }
+.toggle-field { display:flex !important; align-items:flex-start; gap:10px; cursor:pointer; }
+.toggle-field input { min-height:18px; width:18px; accent-color:var(--admin-green); }
+.toggle-field span { display:grid; gap:3px; }
+.toggle-field small { color:var(--admin-muted); }
+@media (max-width: 640px) { .vehicle-manager-toolbar, .vehicle-form-grid { grid-template-columns:1fr; display:grid; } .vehicle-manager-toolbar input { width:100%; } }
 .admin-icon {
   display: inline-flex;
   align-items: center;
@@ -741,6 +767,11 @@
   background: #352f1b;
   color: #dbc287;
   border-color: #53452b;
+}
+.status-publik {
+  background: #143726;
+  color: #84d4a2;
+  border-color: #2a5037;
 }
 .admin-table-foot {
   padding: 13px 19px;

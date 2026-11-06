@@ -8,6 +8,7 @@ import {
   EyeOff,
 } from "lucide-react";
 import { Brand, Button, PageHeader } from "../components/ui";
+import { currentMember, findMember, saveRegisteredMember } from "../data/members";
 export function AuthPage({ register = false }: { register?: boolean }) {
   const navigate = useNavigate();
   const [show, setShow] = useState(false);
@@ -42,7 +43,15 @@ export function AuthPage({ register = false }: { register?: boolean }) {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              navigate("/member/dashboard");
+              const data = new FormData(e.currentTarget);
+              const phone = String(data.get("phone"));
+              const password = String(data.get("password"));
+              if (register) {
+                const member = { id: `MBR-${Date.now().toString().slice(-6)}`, name: String(data.get("name")), citizen: `IDP-${Math.floor(100000 + Math.random() * 900000)}`, phone, steamhex: String(data.get("steamhex")), password, joined: new Date().toISOString(), orders: 0, active: true };
+                saveRegisteredMember(member);
+                navigate("/member/dashboard");
+              } else if (findMember(phone, password)) navigate("/member/dashboard");
+              else window.alert("Nomor hape atau password tidak sesuai.");
             }}
           >
             {register && (
@@ -116,22 +125,23 @@ export function AuthPage({ register = false }: { register?: boolean }) {
   );
 }
 export function MemberDashboard() {
+  const member = currentMember();
   return (
     <main className="page-wrap">
       <div className="section-line">
         <PageHeader
           eyebrow="MEMBER AREA"
           title="Area member"
-          description="Belum ada data member yang terdaftar."
+          description={member ? `Selamat datang, ${member.name}.` : "Belum ada data member yang terdaftar."}
         />
         <span className="member-tag">
           <ShieldCheck size={16} /> IAX MEMBER
         </span>
       </div>
       <div className="panel empty-state">
-        <h2>Belum ada member</h2>
-        <p>Profil, pesanan, dan SPK akan tampil di sini setelah data member tersedia.</p>
-        <Button to="/register">Daftarkan member</Button>
+        <h2>{member ? member.name : "Belum ada member"}</h2>
+        <p>{member ? "Profil member aktif. Pesanan dan SPK akan tampil di sini setelah tersedia." : "Profil, pesanan, dan SPK akan tampil di sini setelah data member tersedia."}</p>
+        {!member && <Button to="/register">Daftarkan member</Button>}
       </div>
     </main>
   );

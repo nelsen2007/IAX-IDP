@@ -36,6 +36,7 @@ import {
   type DemoMember,
   type DemoSpk,
 } from "./data";
+import { readRegisteredMembers } from "../data/members";
 
 function OrderRows({
   rows,
@@ -598,7 +599,8 @@ export function SPKPage() {
 export function MembersPage() {
   const [search, setSearch] = useState(""),
     [selected, setSelected] = useState<DemoMember | null>(null);
-  const rows = demoMembers.filter((m) =>
+  const members = [...demoMembers, ...readRegisteredMembers()];
+  const rows = members.filter((m) =>
     (m.name + m.id + m.citizen).toLowerCase().includes(search.toLowerCase()),
   );
   const history = demoOrders.filter((o) => o.citizen === selected?.citizen);
@@ -613,25 +615,25 @@ export function MembersPage() {
         items={[
           {
             label: "Total Member",
-            value: demoMembers.length,
-            note: demoMembers.length ? "Member terdaftar" : "Belum ada member",
+            value: members.length,
+            note: members.length ? "Member terdaftar" : "Belum ada member",
             icon: <Users size={19} />,
           },
           {
             label: "Member Baru",
-            value: demoMembers.length,
+            value: members.length,
             note: "Member terbaru",
             icon: <Plus size={19} />,
           },
           {
             label: "Member Aktif",
-            value: demoMembers.filter((m) => m.active).length,
+            value: members.filter((m) => m.active).length,
             note: "Status aktif",
             icon: <CheckCheck size={19} />,
           },
           {
             label: "Member dengan Pesanan",
-            value: demoMembers.filter((m) => m.orders > 0).length,
+            value: members.filter((m) => m.orders > 0).length,
             note: "Memiliki pesanan",
             icon: <ShoppingBag size={19} />,
           },

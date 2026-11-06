@@ -1,5 +1,5 @@
 ﻿import { useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   ArrowUpRight,
   Search,
@@ -9,12 +9,19 @@ import {
   Gauge,
   Zap,
   Settings2,
-  Check,
+  Coins,
   Heart,
+  CarFront,
 } from "lucide-react";
-import { vehicles, money } from "../data/mock";
+import { readManagedVehicles } from "../data/vehicles";
 import { Button, Modal, PageHeader } from "../components/ui";
+
+function PublicPrice({ vehicle }: { vehicle: ReturnType<typeof readManagedVehicles>[number] }) {
+  const amount = new Intl.NumberFormat("en-US").format(vehicle.price);
+  return <>{vehicle.jenis === "IMPORT" ? <Coins className="emas-coin-icon" size={18} aria-label="E MAS" /> : "IDP $"} {amount}</>;
+}
 export function VehicleCatalog() {
+  const vehicles = readManagedVehicles().filter((v) => v.published);
   const [params] = useSearchParams();
   const [search, setSearch] = useState("");
   const [brand, setBrand] = useState(params.get("brand") || "");
@@ -99,7 +106,7 @@ export function VehicleCatalog() {
             >
               <div className="vehicle-photo">
                 <img
-                  src={v.image}
+                  src={v.photos?.[0] || v.image}
                   alt={`${v.brand} ${v.name}`}
                   loading="lazy"
                 />
@@ -116,14 +123,14 @@ export function VehicleCatalog() {
               </div>
               <div className="vehicle-content">
                 <div className="vehicle-label">
-                  <span>{v.brand}</span>
-                  <span>{v.category}</span>
+                  <span>{v.jenis}</span>
+                  <span>{v.vehicleType}</span>
                 </div>
                 <h2>{v.name}</h2>
                 <div className="vehicle-facts">
                   <span>
                     <Zap size={14} />
-                    {v.power} HP
+                    {v.category || "Kendaraan"}
                   </span>
                   <span>
                     <Settings2 size={14} />
@@ -131,7 +138,7 @@ export function VehicleCatalog() {
                   </span>
                 </div>
                 <div className="vehicle-price">
-                  <strong>{money(v.price)}</strong>
+                  <strong><PublicPrice vehicle={v} /></strong>
                   <span>
                     Lihat Detail <ArrowUpRight size={15} />
                   </span>
@@ -158,10 +165,10 @@ export function VehicleCatalog() {
   );
 }
 export function VehicleDetail() {
+  const vehicles = readManagedVehicles().filter((v) => v.published);
+  const navigate = useNavigate();
   const { slug } = useParams();
   const v = vehicles.find((x) => x.slug === slug);
-  const [tab, setTab] = useState("Overview");
-  const [color, setColor] = useState(0);
   const [photo, setPhoto] = useState(0);
   const [modal, setModal] = useState("");
   const [saved, setSaved] = useState(false);
@@ -176,7 +183,8 @@ export function VehicleDetail() {
         <Button to="/vehicles">Kembali ke katalog</Button>
       </main>
     );
-  const colors = ["#a9acab", "#18372c", "#171819"];
+  const gallery = [0, 1, 2].map((i) => v.photos?.[i] || (i === 0 ? v.image : ""));
+  
   return (
     <main className="page-wrap detail-page">
       <Link className="back-link" to="/vehicles">
@@ -188,7 +196,7 @@ export function VehicleDetail() {
       <div className="detail-grid">
         <div>
           <div className={"detail-image angle-" + photo}>
-            <img src={v.image} alt={`${v.brand} ${v.name}`} />
+            {gallery[photo] ? <img src={gallery[photo]} alt={`${v.name} · foto ${photo + 1}`} /> : <div className="vehicle-silhouette" aria-label={`Foto ${photo + 1} belum tersedia`}><CarFront size={96} /></div>}
             <span className="badge">{v.badge}</span>
             <button
               className={saved ? "favorite active" : "favorite"}
@@ -207,71 +215,33 @@ export function VehicleDetail() {
                   onClick={() => setPhoto(i)}
                   aria-label={s}
                 >
-                  <img
-                    style={{
-                      objectPosition: `${i * 35}% center`,
-                      transform: `scale(${1 + i * 0.3})`,
-                    }}
-                    src={v.image}
-                    alt={s}
-                  />
+                  {gallery[i] ? <img src={gallery[i]} alt={s} /> : <span className="thumbnail-silhouette" aria-label={`${s} belum tersedia`}><CarFront size={34} /></span>}
                 </button>
               ),
             )}
           </div>
-          <div className="color-choices">
-            <span>
-              Warna pilihan{" "}
-              <b>
-                {["Silver Metallic", "Racing Green", "Obsidian Black"][color]}
-              </b>
-            </span>
-            <div>
-              {colors.map((c, i) => (
-                <button
-                  key={c}
-                  style={{ background: c }}
-                  className={color === i ? "selected" : ""}
-                  aria-label={
-                    ["Silver Metallic", "Racing Green", "Obsidian Black"][i]
-                  }
-                  aria-pressed={color === i}
-                  onClick={() => setColor(i)}
-                >
-                  {color === i && <Check size={16} />}
-                </button>
-              ))}
-            </div>
-          </div>
-          <small className="muted">
-            Foto ilustratif; pilihan warna tidak mengubah foto referensi.
-          </small>
         </div>
         <div className="detail-info">
-          <div className="eyebrow">{v.brand.toUpperCase()}</div>
+          <div className="eyebrow">{v.jenis} / {v.vehicleType}</div>
           <h1>{v.name}</h1>
           <span className="tag">{v.category}</span>
           <p className="detail-description">
-            Performa tanpa kompromi. Desain yang berbicara. Hadirkan pengalaman
-            berkendara yang berbeda di setiap perjalanan.
+            {v.description || "Deskripsi kendaraan belum tersedia."}
           </p>
           <div className="price-block">
             <span>Harga kendaraan</span>
-            <strong>{money(v.price)}</strong>
-            <small>
-              <i /> Tersedia · 3 unit dalam koleksi demo
-            </small>
+            <strong><PublicPrice vehicle={v} /></strong>
           </div>
           <div className="spec-highlights">
             <div>
               <Zap />
-              <b>{v.power} HP</b>
-              <span>Tenaga</span>
+              <b>{v.vehicleType}</b>
+              <span>Type kendaraan</span>
             </div>
             <div>
               <Gauge />
-              <b>3,2 detik</b>
-              <span>0–100 km/h</span>
+              <b>{v.seats}</b>
+              <span>SEAT</span>
             </div>
             <div>
               <Settings2 />
@@ -279,7 +249,7 @@ export function VehicleDetail() {
               <span>Transmisi</span>
             </div>
           </div>
-          <Button onClick={() => setModal("Ringkasan pemesanan")}>
+          <Button onClick={() => navigate("/register")}>
             Pesan Sekarang <ArrowUpRight size={18} />
           </Button>
           <Button secondary onClick={() => setModal("Konsultasi sales")}>
@@ -289,71 +259,6 @@ export function VehicleDetail() {
             Prototype · Tidak ada transaksi atau pemesanan yang dikirim.
           </p>
         </div>
-      </div>
-      <div className="tabs">
-        {["Overview", "Spesifikasi", "Fitur", "Galeri"].map((x) => (
-          <button
-            key={x}
-            role="tab"
-            aria-selected={tab === x}
-            className={tab === x ? "active" : ""}
-            onClick={() => setTab(x)}
-          >
-            {x}
-          </button>
-        ))}
-      </div>
-      <div className="tab-content">
-        {tab === "Overview" ? (
-          <>
-            <h2>Dirancang untuk pengalaman luar biasa.</h2>
-            <p>
-              {v.brand} {v.name} memadukan karakter desain yang khas dengan
-              teknologi performa tinggi. Jelajahi spesifikasi dan fitur dalam
-              koleksi IAX 2026.
-            </p>
-          </>
-        ) : tab === "Spesifikasi" ? (
-          <div className="spec-table">
-            {Object.entries({
-              Mesin: "V8 Twin Turbo",
-              Tenaga: `${v.power} HP`,
-              Torsi: "650 Nm",
-              Transmisi: "8-speed Automatic",
-              Drivetrain: "AWD",
-              "Top Speed": "320 km/h",
-              Akselerasi: "3,2 detik",
-              "Kapasitas Penumpang": "2 orang",
-            }).map(([a, b]) => (
-              <div key={a}>
-                <span>{a}</span>
-                <b>{b}</b>
-              </div>
-            ))}
-          </div>
-        ) : tab === "Fitur" ? (
-          <div className="features-list">
-            {[
-              "Adaptive cruise control",
-              "Premium audio system",
-              "Carbon performance package",
-              "Digital cockpit",
-              "Sport exhaust",
-              "Advanced safety assist",
-            ].map((x) => (
-              <p key={x}>
-                <Check size={18} />
-                {x}
-              </p>
-            ))}
-          </div>
-        ) : (
-          <img
-            className="gallery-wide"
-            src={v.image}
-            alt={`Galeri ${v.name}`}
-          />
-        )}
       </div>
       {modal && (
         <Modal title={modal} onClose={() => setModal("")}>
@@ -366,10 +271,7 @@ export function VehicleDetail() {
             <b>
               {v.brand} {v.name}
             </b>
-            <span>
-              {["Silver Metallic", "Racing Green", "Obsidian Black"][color]}
-            </span>
-            <strong>{money(v.price)}</strong>
+            <strong><PublicPrice vehicle={v} /></strong>
           </div>
           <Button to="/member/dashboard">
             Lihat Demo Member <ArrowUpRight size={16} />

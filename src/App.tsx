@@ -6,9 +6,10 @@ import Home from "./pages/HomePage";
 import { VehicleCatalog, VehicleDetail } from "./pages/VehiclePages";
 import { AuthPage, MemberDashboard } from "./pages/MemberPages";
 import { SalesDashboard, CreateSPK } from "./pages/DashboardPages";
-import { vehicles } from "./data/mock";
+import { readManagedVehicles } from "./data/vehicles";
 const AdminApp = lazy(() => import("./admin/AdminApp"));
 function Info({ type }: { type: string }) {
+  const vehicles = readManagedVehicles().filter((v) => v.published);
   return (
     <main className="page-wrap info-page">
       <PageHeader
