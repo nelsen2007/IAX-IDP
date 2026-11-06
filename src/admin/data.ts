@@ -30,26 +30,15 @@ export const demoMembers = demoOrders.map((order, i) => ({
   active: i !== 4,
 }));
 export type DemoMember = (typeof demoMembers)[number];
-export const demoSpks = [
-  {
-    number: "SPK-DEMO-260001",
-    date: "2026-11-04",
-    order: demoOrders[2],
-    sales: "Ardi Putra",
-    status: "Diterbitkan",
-    discount: 50000,
-    dp: 500000,
-  },
-  {
-    number: "SPK-DEMO-260002",
-    date: "2026-11-04",
-    order: demoOrders[3],
-    sales: "Ardi Putra",
-    status: "Draft",
-    discount: 0,
-    dp: 1000000,
-  },
-];
+export const demoSpks: {
+  number: string;
+  date: string;
+  order: DemoOrder;
+  sales: string;
+  status: string;
+  discount: number;
+  dp: number;
+}[] = [];
 export type DemoSpk = (typeof demoSpks)[number];
 export const dateLabel = (date: string) =>
   new Intl.DateTimeFormat("id-ID", {

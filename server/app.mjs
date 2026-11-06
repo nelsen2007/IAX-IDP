@@ -184,6 +184,39 @@ export function createApp({ pool, config }) {
     clearSession(res);
     res.json({ ok: true });
   });
+  api.get("/staff", async (req, res) => {
+    res.json({ staff: await service.listStaff() });
+  });
+  api.post(
+    "/staff",
+    validate(
+      z
+        .object({
+          name: z.string().min(1).max(120),
+          username: z.string().min(3).max(64),
+          password: z.string().min(1).max(1024),
+          steamHex: z.string().min(21).max(38),
+          role: z.enum(["ADMIN", "CASHIER", "SALES"]),
+        })
+        .strict(),
+    ),
+    async (req, res) => {
+      const staff = await service.createStaff({
+        ...req.body,
+        createdBy: req.admin.user.id,
+        ip: req.ip,
+      });
+      res.status(201).json({ staff });
+    },
+  );
+  api.post(
+    "/staff/remove",
+    validate(z.object({ id: z.string().regex(/^\d+$/) }).strict()),
+    async (req, res) => {
+      await service.removeStaff({ id: req.body.id, operator: req.admin.user.id, ip: req.ip });
+      res.json({ ok: true });
+    },
+  );
   api.use((_req, _res) => {
     throw new AuthError(404, "Endpoint tidak tersedia.");
   });

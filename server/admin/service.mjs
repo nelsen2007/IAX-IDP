@@ -161,9 +161,8 @@ export function createAdminService(pool, config) {
       const ok =
         valid &&
         current?.is_active &&
-        current.role === "ADMIN" &&
-        current.mfa_enabled &&
-        current.password_hash === u.password_hash;
+        current.password_hash === u.password_hash &&
+        (current.role === "ADMIN" ? current.mfa_enabled : !current.mfa_enabled);
       await c.execute(
         "INSERT INTO admin_login_attempts (username_identifier,source_ip,success,failure_reason_code) VALUES (?,?,?,?)",
         [tokenHash(username), ip, !!ok, ok ? null : "INVALID_CREDENTIALS"],
@@ -177,6 +176,16 @@ export function createAdminService(pool, config) {
       if (!ok) return null;
       const next = opaqueToken(),
         nextCsrf = opaqueToken();
+      if (current.role !== "ADMIN") {
+        const sessionToken = opaqueToken(), sessionCsrf = opaqueToken();
+        await c.execute(
+          "INSERT INTO admin_sessions (admin_user_id,session_token_hash,csrf_token,credential_version,expires_at,ip_address,user_agent) VALUES (?,?,?,?,DATE_ADD(UTC_TIMESTAMP(3),INTERVAL 8 HOUR),?,?)",
+          [current.id, tokenHash(sessionToken), sessionCsrf, current.credential_version, ip, (_userAgent || "").slice(0, 255)],
+        );
+        await c.execute("UPDATE admin_users SET last_login_at=UTC_TIMESTAMP(3) WHERE id=?", [current.id]);
+        await audit(c, current.id, "login_success", ip);
+        return { token: sessionToken, csrf: sessionCsrf, user: publicUser(current), mfaRequired: false };
+      }
       await c.execute(
         "INSERT INTO admin_auth_challenges (token_hash,csrf_token,phase,admin_user_id,credential_version,expires_at) VALUES (?,?,'mfa',?,?,DATE_ADD(UTC_TIMESTAMP(3),INTERVAL 5 MINUTE))",
         [tokenHash(next), nextCsrf, current.id, current.credential_version],
@@ -280,13 +289,11 @@ export function createAdminService(pool, config) {
     );
     if (
       !u?.is_active ||
-      !u.mfa_enabled ||
       !s?.fresh ||
       s.revoked_at ||
       u.credential_version !== s.credential_version
     )
       throw new AuthError(401, "Sesi berakhir. Silakan login kembali.");
-    if (u.role !== "ADMIN") throw new AuthError(403);
     if (csrf !== undefined) requireCsrf(csrf, s.csrf_token);
     return { u, s };
   }
@@ -465,6 +472,72 @@ export function createAdminService(pool, config) {
     });
     return { recoveryCodes };
   }
+  async function listStaff() {
+    const [rows] = await pool.execute(
+      "SELECT s.id,s.name,s.steamhex,s.role,s.is_active,s.created_at,a.username FROM staff_accounts s LEFT JOIN admin_users a ON a.id=s.admin_user_id WHERE s.is_active=TRUE ORDER BY s.created_at DESC",
+    );
+    return rows.map((row) => ({
+      id: String(row.id),
+      name: row.name,
+      steamHex: row.steamhex,
+      username: row.username || "legacy",
+      role: row.role,
+      active: !!row.is_active,
+      createdAt: row.created_at,
+    }));
+  }
+  async function createStaff({ name, steamHex, role, username, password, createdBy, ip }) {
+    const cleanName = name?.trim();
+    const cleanSteamHex = steamHex?.trim().toLowerCase();
+    if (!cleanName || cleanName.length > 120)
+      throw new AuthError(400, "Nama pengurus tidak valid.");
+    if (!/^steam:[0-9a-f]{15,32}$/.test(cleanSteamHex || ""))
+      throw new AuthError(400, "SteamHex harus berformat steam: diikuti hex.");
+    if (!["ADMIN", "CASHIER", "SALES"].includes(role))
+      throw new AuthError(400, "Role pengurus tidak valid.");
+    if (!/^[a-z0-9][a-z0-9._-]{2,63}$/.test(username?.trim().toLowerCase() || ""))
+      throw new AuthError(400, "Username tidak valid.");
+    if (typeof password !== "string" || password.length < 1 || password.length > 1024)
+      throw new AuthError(400, "Password wajib diisi.");
+    try {
+      username = username.trim().toLowerCase();
+      const hash = await hashPassword(password);
+      const result = await tx(async (c) => {
+        const [account] = await c.execute(
+          "INSERT INTO admin_users (username,display_name,password_hash,role,mfa_enabled,steamhex,provisioning_source,provisioned_by) VALUES (?,?,?, ?,FALSE,?,?,?)",
+          [username, cleanName, hash, role, cleanSteamHex, "staff-panel", String(createdBy)],
+        );
+        const [staff] = await c.execute(
+          "INSERT INTO staff_accounts (admin_user_id,name,steamhex,role,created_by) VALUES (?,?,?,?,?)",
+          [account.insertId, cleanName, cleanSteamHex, role, createdBy],
+        );
+        await audit(c, createdBy, "staff_created", ip, { staffId: String(staff.insertId), role });
+        return { staffId: staff.insertId, accountId: account.insertId };
+      });
+      return {
+        id: String(result.staffId),
+        name: cleanName,
+        steamHex: cleanSteamHex,
+        username,
+        role,
+        active: true,
+      };
+    } catch (error) {
+      if (error.code === "ER_DUP_ENTRY")
+        throw new AuthError(409, "Username atau SteamHex tersebut sudah terdaftar.");
+      throw error;
+    }
+  }
+  async function removeStaff({ id, operator, ip }) {
+    await tx(async (c) => {
+      const staff = await one(c, "SELECT admin_user_id FROM staff_accounts WHERE id=? FOR UPDATE", [id]);
+      if (!staff) throw new AuthError(404, "Pengurus tidak ditemukan.");
+      await c.execute("UPDATE admin_users SET is_active=FALSE, credential_version=credential_version+1 WHERE id=?", [staff.admin_user_id]);
+      await c.execute("UPDATE admin_sessions SET revoked_at=UTC_TIMESTAMP(3) WHERE admin_user_id=? AND revoked_at IS NULL", [staff.admin_user_id]);
+      await c.execute("UPDATE staff_accounts SET is_active=FALSE WHERE id=?", [id]);
+      await audit(c, operator, "staff_removed", ip, { staffId: String(id) });
+    });
+  }
   return {
     bootstrap,
     login,
@@ -475,6 +548,9 @@ export function createAdminService(pool, config) {
     revokeAll,
     provision,
     manage,
+    listStaff,
+    createStaff,
+    removeStaff,
     throttle,
   };
 }

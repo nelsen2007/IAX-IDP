@@ -180,26 +180,26 @@ export function AdminDashboard() {
         items={[
           {
             label: "Total Pesanan",
-            value: "05",
-            note: "+2 pada periode contoh",
+            value: String(demoOrders.length).padStart(2, "0"),
+            note: demoOrders.length ? "Pesanan tercatat" : "Belum ada pesanan masuk",
             icon: <ShoppingBag size={19} />,
           },
           {
             label: "Pesanan Baru",
-            value: "01",
+            value: String(demoOrders.filter((o) => o.status === "Baru").length).padStart(2, "0"),
             note: "Menunggu peninjauan",
             icon: <Clock3 size={19} />,
           },
           {
             label: "SPK Diterbitkan",
-            value: "01",
-            note: "Dari 2 dokumen contoh",
+            value: String(demoSpks.length).padStart(2, "0"),
+            note: demoSpks.length ? "Dokumen diterbitkan" : "Belum ada SPK",
             icon: <FileText size={19} />,
           },
           {
             label: "Total Member",
-            value: "05",
-            note: "+3 pada periode contoh",
+            value: String(demoMembers.length).padStart(2, "0"),
+            note: demoMembers.length ? "Member terdaftar" : "Belum ada member",
             icon: <Users size={19} />,
           },
         ]}
@@ -228,8 +228,8 @@ export function AdminDashboard() {
             <OrderRows rows={demoOrders} compact onSelect={setSelected} />
           </AdminDataTable>
           <div className="admin-table-foot">
-            <span>Menampilkan 5 pesanan contoh</span>
-            <span>05 TOTAL</span>
+            <span>Menampilkan {demoOrders.length} pesanan</span>
+            <span>{String(demoOrders.length).padStart(2, "0")} TOTAL</span>
           </div>
         </section>
         <section className="admin-panel admin-activity">
@@ -330,30 +330,29 @@ export function OrdersPage() {
         title="Pesanan kendaraan"
         description="Pantau setiap pemesanan dari permintaan awal hingga selesai."
       />
-      <DemoNotice />
       <StatCards
         items={[
           {
             label: "Semua Pesanan",
-            value: 5,
-            note: "Seluruh data contoh",
+            value: demoOrders.length,
+            note: demoOrders.length ? "Seluruh pesanan tercatat" : "Belum ada pesanan masuk",
             icon: <ShoppingBag size={19} />,
           },
           {
             label: "Menunggu Proses",
-            value: 1,
+            value: demoOrders.filter((o) => o.status === "Baru").length,
             note: "Pesanan berstatus baru",
             icon: <Clock3 size={19} />,
           },
           {
             label: "Dalam Proses",
-            value: 2,
+            value: demoOrders.filter((o) => o.status === "Diproses" || o.status === "SPK Dibuat").length,
             note: "Diproses dan SPK dibuat",
             icon: <Car size={19} />,
           },
           {
             label: "Selesai",
-            value: 1,
+            value: demoOrders.filter((o) => o.status === "Selesai").length,
             note: "Pemesanan selesai",
             icon: <CheckCheck size={19} />,
           },
@@ -364,7 +363,7 @@ export function OrdersPage() {
           <div>
             <h2>Daftar pesanan</h2>
             <p>
-              {rows.length} dari {demoOrders.length} pesanan contoh
+              {rows.length} dari {demoOrders.length} pesanan
             </p>
           </div>
           <SlidersHorizontal size={18} />

@@ -3,17 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowUpRight,
   ArrowLeft,
-  User,
   ShieldCheck,
-  ShoppingBag,
-  FileText,
-  Clock,
-  CheckCircle2,
   Eye,
   EyeOff,
 } from "lucide-react";
-import { Brand, Button, PageHeader, Modal } from "../components/ui";
-import { money, vehicles } from "../data/mock";
+import { Brand, Button, PageHeader } from "../components/ui";
 export function AuthPage({ register = false }: { register?: boolean }) {
   const navigate = useNavigate();
   const [show, setShow] = useState(false);
@@ -129,122 +123,23 @@ export function AuthPage({ register = false }: { register?: boolean }) {
   );
 }
 export function MemberDashboard() {
-  const [modal, setModal] = useState(false);
   return (
     <main className="page-wrap">
       <div className="section-line">
         <PageHeader
           eyebrow="MEMBER AREA"
-          title="Halo, Raka Pratama."
-          description="Selamat datang di garasimu. Pantau perjalanan menuju kendaraan impian."
+          title="Area member"
+          description="Belum ada data member yang terdaftar."
         />
         <span className="member-tag">
           <ShieldCheck size={16} /> IAX MEMBER
         </span>
       </div>
-      <div className="member-grid">
-        <aside className="panel profile-card">
-          <span className="profile-avatar">RP</span>
-          <h2>Raka Pratama</h2>
-          <p>IDP-004182</p>
-          <span className="badge">Member Aktif</span>
-          <hr />
-          <div>
-            <span>
-              <User size={16} />
-              Citizen ID
-            </span>
-            <b>IDP-004182</b>
-          </div>
-          <div>
-            <span>Email</span>
-            <b>raka@example.com</b>
-          </div>
-          <div>
-            <span>Bergabung</span>
-            <b>November 2026</b>
-          </div>
-          <p className="demo-note">Profil dan pesanan ilustratif.</p>
-        </aside>
-        <div>
-          <div className="stats-grid member-stats">
-            {[
-              [ShoppingBag, "Total Pesanan", "2"],
-              [Clock, "Dalam Proses", "1"],
-              [FileText, "SPK Tersedia", "1"],
-            ].map(([Icon, label, value]) => {
-              const I = Icon as typeof ShoppingBag;
-              return (
-                <div className="stat" key={String(label)}>
-                  <I size={19} />
-                  <span>{String(label)}</span>
-                  <strong>{String(value)}</strong>
-                </div>
-              );
-            })}
-          </div>
-          <div className="panel member-order">
-            <div className="section-line">
-              <h2>Pesanan Terbaru</h2>
-              <span className="status">Diproses</span>
-            </div>
-            <div className="member-car">
-              <img src={vehicles[0].image} alt="Porsche 911 GT3 RS" />
-              <div>
-                <span className="eyebrow">PORSCHE</span>
-                <h3>911 GT3 RS</h3>
-                <p>Silver Metallic · IAX-260041</p>
-                <strong>{money(4250000)}</strong>
-              </div>
-            </div>
-            <div className="order-progress">
-              {[
-                "Pesanan Diajukan",
-                "Diproses Sales",
-                "SPK Dibuat",
-                "Selesai",
-              ].map((x, i) => (
-                <div key={x} className={i < 2 ? "done" : ""}>
-                  <CheckCircle2 size={19} />
-                  <span>{x}</span>
-                </div>
-              ))}
-            </div>
-            <div className="section-line">
-              <small className="muted">Sales pendamping: Ardi Putra</small>
-              <Button secondary onClick={() => setModal(true)}>
-                Lihat Detail <ArrowUpRight size={16} />
-              </Button>
-            </div>
-          </div>
-          <div className="panel spk-card">
-            <FileText size={27} />
-            <div>
-              <h3>SPK Kendaraan</h3>
-              <p>SPK-2026-0039 · BMW M4 Competition</p>
-            </div>
-            <Button secondary onClick={() => setModal(true)}>
-              Lihat SPK
-            </Button>
-          </div>
-        </div>
+      <div className="panel empty-state">
+        <h2>Belum ada member</h2>
+        <p>Profil, pesanan, dan SPK akan tampil di sini setelah data member tersedia.</p>
+        <Button to="/register">Daftarkan member</Button>
       </div>
-      {modal && (
-        <Modal title="Dokumen & Pesanan Demo" onClose={() => setModal(false)}>
-          <p>Data ini merupakan contoh tampilan area member.</p>
-          <div className="summary-box">
-            <b>SPK-2026-0039</b>
-            <span>Raka Pratama · IDP-004182</span>
-            <span>BMW M4 Competition · Obsidian Black</span>
-            <strong>{money(2150000)}</strong>
-            <span>Status: SPK Dibuat</span>
-          </div>
-          <p className="demo-note">
-            Dokumen ini bukan SPK resmi dan tidak dapat digunakan untuk
-            transaksi.
-          </p>
-        </Modal>
-      )}
     </main>
   );
 }

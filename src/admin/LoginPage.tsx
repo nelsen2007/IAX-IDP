@@ -40,13 +40,17 @@ export default function AdminLoginPage() {
     try {
       if (!mfa) {
         const boot = await adminApi<{ csrf: string }>("csrf");
-        const next = await adminApi<{ csrf: string }>("login", {
+        const next = await adminApi<{ csrf: string; mfaRequired: boolean }>("login", {
           csrf: boot.csrf,
           body: { username, password },
         });
-        setCsrf(next.csrf);
-        setMfa(true);
-        setPassword("");
+        if (next.mfaRequired) {
+          setCsrf(next.csrf);
+          setMfa(true);
+          setPassword("");
+        } else {
+          navigate("/admin", { replace: true });
+        }
       } else {
         await adminApi("mfa/verify", { csrf, body: { code: code.trim() } });
         setCode("");

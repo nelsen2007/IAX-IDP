@@ -2,7 +2,7 @@ export type AdminUser = {
   id: string;
   username: string;
   displayName: string;
-  role: "ADMIN";
+  role: "ADMIN" | "CASHIER" | "SALES";
   mfaEnabled: boolean;
   lastLoginAt: string | null;
 };
@@ -26,7 +26,9 @@ export async function adminApi<T>(
 ): Promise<T> {
   let response: Response;
   try {
-    response = await fetch("/api/admin/auth/" + path, {
+    response = await fetch(
+      path.startsWith("staff") ? "/api/admin/" + path : "/api/admin/auth/" + path,
+      {
       method: options.body === undefined ? "GET" : "POST",
       credentials: "same-origin",
       cache: "no-store",
@@ -36,10 +38,11 @@ export async function adminApi<T>(
           : { "Content-Type": "application/json" }),
         ...(options.csrf ? { "X-CSRF-Token": options.csrf } : {}),
       },
-      ...(options.body === undefined
-        ? {}
-        : { body: JSON.stringify(options.body) }),
-    });
+        ...(options.body === undefined
+          ? {}
+          : { body: JSON.stringify(options.body) }),
+      },
+    );
   } catch {
     throw new ApiError(
       0,

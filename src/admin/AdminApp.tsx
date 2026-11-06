@@ -20,6 +20,7 @@ import {
   ChevronRight,
   ShieldCheck,
   LoaderCircle,
+  UserCog,
 } from "lucide-react";
 import AdminLoginPage from "./LoginPage";
 import { AdminBrand, Drawer } from "./components";
@@ -32,12 +33,15 @@ import {
 } from "./OperationsPages";
 import ReportsPage from "./ReportsPage";
 import SettingsPage from "./SettingsPage";
+import StaffPage from "./StaffPage";
+import { demoOrders } from "./data";
 import "./admin.css";
 
 const menus = [
   { to: "/admin/orders", label: "PESANAN", icon: ShoppingBag },
   { to: "/admin/spk", label: "SPK", icon: FileText },
   { to: "/admin/members", label: "MEMBER", icon: Users },
+  { to: "/admin/staff", label: "PENGURUS", icon: UserCog },
   { to: "/admin/reports", label: "LAPORAN", icon: ChartNoAxesCombined },
   { to: "/admin/settings", label: "PENGATURAN", icon: Settings },
 ];
@@ -154,7 +158,7 @@ export default function AdminApp() {
           >
             <Icon size={18} />
             {label}
-            {label === "PESANAN" && <small>05</small>}
+            {label === "PESANAN" && <small>{String(demoOrders.length).padStart(2, "0")}</small>}
           </NavLink>
         ))}
       </nav>
@@ -248,6 +252,7 @@ export default function AdminApp() {
             <Route path="orders" element={<OrdersPage />} />
             <Route path="spk" element={<SPKPage />} />
             <Route path="members" element={<MembersPage />} />
+            <Route path="staff" element={<StaffPage session={session} />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route
               path="settings"
