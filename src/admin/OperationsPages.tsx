@@ -175,7 +175,6 @@ export function AdminDashboard() {
           </Link>
         }
       />
-      <DemoNotice />
       <StatCards
         items={[
           {
@@ -610,31 +609,30 @@ export function MembersPage() {
         title="Member Management"
         description="Tinjau profil karakter, informasi kontak, dan riwayat pemesanan."
       />
-      <DemoNotice />
       <StatCards
         items={[
           {
             label: "Total Member",
-            value: 5,
-            note: "Profil contoh",
+            value: demoMembers.length,
+            note: demoMembers.length ? "Member terdaftar" : "Belum ada member",
             icon: <Users size={19} />,
           },
           {
             label: "Member Baru",
-            value: 3,
-            note: "Periode contoh",
+            value: demoMembers.length,
+            note: "Member terbaru",
             icon: <Plus size={19} />,
           },
           {
             label: "Member Aktif",
-            value: 4,
-            note: "Status ilustratif",
+            value: demoMembers.filter((m) => m.active).length,
+            note: "Status aktif",
             icon: <CheckCheck size={19} />,
           },
           {
             label: "Member dengan Pesanan",
-            value: 5,
-            note: "Minimal satu pesanan",
+            value: demoMembers.filter((m) => m.orders > 0).length,
+            note: "Memiliki pesanan",
             icon: <ShoppingBag size={19} />,
           },
         ]}
@@ -643,7 +641,7 @@ export function MembersPage() {
         <div className="admin-panel-heading">
           <div>
             <h2>Daftar member</h2>
-            <p>Identitas karakter untuk demonstrasi</p>
+            <p>Data member terdaftar</p>
           </div>
           <Users size={18} />
         </div>
@@ -675,7 +673,7 @@ export function MembersPage() {
               <td className="admin-mono">{m.id}</td>
               <td>
                 <strong>{m.name}</strong>
-                <small>{m.active ? "Aktif" : "Tidak aktif"} · contoh</small>
+                <small>{m.active ? "Aktif" : "Tidak aktif"}</small>
               </td>
               <td>{m.citizen}</td>
               <td>{m.phone}</td>
@@ -714,7 +712,7 @@ export function MembersPage() {
               ["Bergabung", dateLabel(selected.joined)],
               [
                 "Status",
-                selected.active ? "Aktif — contoh" : "Tidak aktif — contoh",
+                selected.active ? "Aktif" : "Tidak aktif",
               ],
             ]}
           />
@@ -736,7 +734,7 @@ export function MembersPage() {
               </div>
             ))}
           {!demoSpks.some((s) => s.order.citizen === selected.citizen) && (
-            <p className="admin-muted">Belum ada SPK dalam data contoh.</p>
+            <p className="admin-muted">Belum ada SPK.</p>
           )}
           <div className="admin-message">
             <XCircle size={15} /> Pengelolaan role admin tidak tersedia melalui

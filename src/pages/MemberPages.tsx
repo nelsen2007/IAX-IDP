@@ -110,13 +110,6 @@ export function AuthPage({ register = false }: { register?: boolean }) {
               {register ? "Masuk di sini" : "Daftar Member"}
             </Link>
           </p>
-          <div className="demo-callout">
-            <ShieldCheck size={18} />
-            <span>
-              Mode prototype. Form hanya membuka dashboard demo; data tidak
-              disimpan.
-            </span>
-          </div>
         </div>
       </div>
     </main>
