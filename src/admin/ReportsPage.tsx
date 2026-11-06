@@ -8,19 +8,23 @@ import {
 } from "lucide-react";
 import {
   AdminDataTable,
-  DemoNotice,
   PageIntro,
   StatCards,
   StatusBadge,
 } from "./components";
-import { demoOrders, demoSpks, money, dateLabel } from "./data";
+import { dateLabel } from "./data";
+import { readRegisteredMembers } from "../data/members";
+import { useMemberOrders } from "../data/orders";
+
+const priceLabel = (amount: number, currency = "IPD $") => `${currency} ${new Intl.NumberFormat("en-US").format(amount)}`;
 
 export default function ReportsPage() {
+  const memberOrders = useMemberOrders();
+  const memberCount = readRegisteredMembers().length;
   const [period, setPeriod] = useState("7"),
     [from, setFrom] = useState("2026-11-01"),
     [to, setTo] = useState("2026-11-06"),
     [message, setMessage] = useState("");
-  // Reports intentionally use a fixed demo reference day, displayed beside the filters.
   const start =
     period === "custom"
       ? from
@@ -31,27 +35,25 @@ export default function ReportsPage() {
           : "2026-10-08";
   const end = period === "custom" ? to : "2026-11-06";
   const invalid = start > end;
-  const rows = useMemo(
-    () =>
-      invalid ? [] : demoOrders.filter((o) => o.date >= start && o.date <= end),
-    [start, end, invalid],
-  );
-  const total = rows.reduce((a, o) => a + o.price, 0),
-    finished = rows.filter((o) => o.status === "Selesai").length;
-  const spks = demoSpks.filter(
-    (s) => s.status === "Diterbitkan" && s.date >= start && s.date <= end,
-  ).length;
-  const days = Array.from(new Set(rows.map((o) => o.date))).sort();
-  const counts = days.map((day) => rows.filter((o) => o.date === day).length);
-  const max = Math.max(1, ...counts),
-    points = counts
-      .map(
-        (v, i) =>
-          `${55 + i * (540 / Math.max(1, counts.length - 1))},${180 - (v / max) * 125}`,
-      )
-      .join(" ");
-  const statuses = ["Baru", "Diproses", "SPK Dibuat", "Selesai", "Dibatalkan"];
-  const colors = ["#78ff44", "#62b7f8", "#b49cff", "#f3c971", "#697d70"];
+  const rows = useMemo(() => {
+    const reportRows = memberOrders.map((order) => ({
+      ...order,
+      citizen: order.steamhex,
+      date: order.createdAt,
+      price: order.total,
+      brand: "",
+      image: order.image || "",
+    }));
+    return invalid ? [] : reportRows.filter((o) => o.date.slice(0, 10) >= start && o.date.slice(0, 10) <= end);
+  }, [memberOrders, start, end, invalid]);
+  const reportOrders = memberOrders.filter((o) => o.createdAt.slice(0, 10) >= start && o.createdAt.slice(0, 10) <= end),
+    issuedSpks = reportOrders.filter((o) => o.spk).length,
+    paidSpks = reportOrders.filter((o) => o.spk?.paymentStatus === "LUNAS").length,
+    dealerIncome = reportOrders.filter((o) => o.currency === "IDP $" && o.spk?.paymentStatus === "LUNAS").reduce((sum, o) => sum + o.total, 0);
+  const statuses = ["BELUM BAYAR", "LUNAS"];
+  const colors = ["#f3c971", "#78ff44"];
+  const statusRows = rows.filter((o) => o.spk);
+  const paymentStatusCount = (status: string) => statusRows.filter((o) => status === "LUNAS" ? o.spk?.paymentStatus === "LUNAS" : o.spk?.paymentStatus === "BELUM BAYAR").length;
   const sorted = [...rows].sort((a, b) => b.price - a.price);
   return (
     <>
@@ -73,7 +75,6 @@ export default function ReportsPage() {
           </button>
         }
       />
-      <DemoNotice />
       {message && (
         <p role="status" className="admin-message">
           {message}
@@ -119,7 +120,7 @@ export default function ReportsPage() {
             </label>
           </div>
         )}
-        <span>Referensi demo: 06 Nov 2026</span>
+        <span>Periode: {dateLabel(start)} — {dateLabel(end)}</span>
       </div>
       {invalid && (
         <p role="alert" className="admin-error">
@@ -129,103 +130,44 @@ export default function ReportsPage() {
       <StatCards
         items={[
           {
-            label: "Total Pesanan",
-            value: rows.length,
-            note: "Pada periode contoh",
+            label: "Total Member",
+            value: memberCount,
+            note: "Member terdaftar",
             icon: <ShoppingBag size={19} />,
           },
           {
-            label: "Pesanan Selesai",
-            value: finished,
-            note: "Status selesai",
+            label: "SPK Diterbitkan",
+            value: issuedSpks,
+            note: "Pada periode terpilih",
             icon: <CheckCheck size={19} />,
           },
           {
-            label: "SPK Diterbitkan",
-            value: spks,
-            note: "Dokumen contoh",
+            label: "SPK LUNAS",
+            value: paidSpks,
+            note: "Pembayaran diterima",
             icon: <FileText size={19} />,
           },
           {
-            label: "Total Nilai Pemesanan",
-            value: money(total),
-            note: "Bukan pendapatan diterima",
+            label: "Total Income DEALER",
+            value: priceLabel(dealerIncome),
+            note: "IPD $ · Pembayaran lunas",
             icon: <Wallet size={19} />,
           },
         ]}
       />
       <div className="admin-charts">
-        <section className="admin-panel admin-trend">
+        <section className="admin-panel">
           <div className="admin-panel-heading">
             <div>
-              <h2>Order Trends</h2>
-              <p>Jumlah pesanan per tanggal</p>
+              <h2>Top Ordered Vehicles</h2>
+              <p>Popularitas kendaraan berdasarkan pesanan masuk</p>
             </div>
-            <span className="admin-chart-key">
-              <i />
-              Pesanan
-            </span>
+            <span className="admin-small-label">{rows.length} KENDARAAN</span>
           </div>
-          {rows.length ? (
-            <svg viewBox="0 0 650 230" role="img" aria-label="Tren pemesanan">
-              <title>Tren pemesanan</title>
-              {[0, 1, 2].map((v) => (
-                <g key={v}>
-                  <line
-                    x1="45"
-                    x2="610"
-                    y1={180 - (v / 2) * 125}
-                    y2={180 - (v / 2) * 125}
-                    stroke="#254332"
-                    strokeDasharray="3 5"
-                  />
-                  <text x="20" y={185 - (v / 2) * 125}>
-                    {Math.round((v / 2) * max)}
-                  </text>
-                </g>
-              ))}
-              <polygon
-                points={`55,180 ${points} ${55 + (counts.length - 1) * (540 / Math.max(1, counts.length - 1))},180`}
-                fill="#39e51b"
-                fillOpacity="0.07"
-              />
-              <polyline
-                points={points}
-                fill="none"
-                stroke="#78ff44"
-                strokeWidth="2.5"
-              />
-              {counts.map((count, i) => (
-                <g key={days[i]}>
-                  <circle
-                    cx={55 + i * (540 / Math.max(1, counts.length - 1))}
-                    cy={180 - (count / max) * 125}
-                    r="4"
-                    fill="#78ff44"
-                  />
-                  <text
-                    x={55 + i * (540 / Math.max(1, counts.length - 1))}
-                    y="214"
-                    textAnchor="middle"
-                  >
-                    {dateLabel(days[i]).slice(0, 6)}
-                  </text>
-                  <title>
-                    {dateLabel(days[i])}: {count} pesanan
-                  </title>
-                </g>
-              ))}
-            </svg>
-          ) : (
-            <div className="admin-chart-empty">
-              Tidak ada pesanan dalam periode ini.
-            </div>
-          )}
-          <p className="admin-chart-summary">
-            {days
-              .map((day, i) => `${dateLabel(day)}: ${counts[i]}`)
-              .join(" · ") || "0 pesanan"}
-          </p>
+          <AdminDataTable headers={["Kendaraan", "Jumlah Pemesanan", "Total Nilai Pesanan", "Status"]} empty={!rows.length}>
+            {sorted.map((o) => <tr key={o.id}><td><div className="admin-vehicle-cell"><img src={o.image} alt="" /><div><strong>{o.vehicle}</strong><small>{o.brand}</small></div></div></td><td><div className="admin-bar-track" aria-label={`${o.vehicle}: 1 pemesanan`}><span /></div>1 pesanan</td><td className="admin-nowrap">{priceLabel(o.price, o.currency)}</td><td><StatusBadge status={o.status} /></td></tr>)}
+          </AdminDataTable>
+          <div className="admin-table-foot">Nilai diambil dari data pesanan yang tersimpan.</div>
         </section>
         <section className="admin-panel">
           <div className="admin-panel-heading">
@@ -249,13 +191,10 @@ export default function ReportsPage() {
                 strokeWidth="17"
               />
               {statuses.map((status, i) => {
-                const count = rows.filter((o) => o.status === status).length;
+                const count = paymentStatusCount(status);
                 const prior = statuses
                   .slice(0, i)
-                  .reduce(
-                    (sum, s) => sum + rows.filter((o) => o.status === s).length,
-                    0,
-                  );
+                  .reduce((sum, s) => sum + paymentStatusCount(s), 0);
                 return (
                   <circle
                     key={status}
@@ -266,9 +205,9 @@ export default function ReportsPage() {
                     stroke={colors[i]}
                     strokeWidth="17"
                     pathLength="100"
-                    strokeDasharray={`${rows.length ? (count / rows.length) * 100 : 0} 100`}
+                    strokeDasharray={`${statusRows.length ? (count / statusRows.length) * 100 : 0} 100`}
                     strokeDashoffset={
-                      rows.length ? (-prior / rows.length) * 100 : 0
+                      statusRows.length ? (-prior / statusRows.length) * 100 : 0
                     }
                     transform="rotate(-90 80 80)"
                   />
@@ -280,7 +219,7 @@ export default function ReportsPage() {
                 textAnchor="middle"
                 className="admin-donut-number"
               >
-                {rows.length}
+                {statusRows.length}
               </text>
               <text x="80" y="98" textAnchor="middle">
                 PESANAN
@@ -293,62 +232,13 @@ export default function ReportsPage() {
                     <i style={{ background: colors[i] }} />
                     {s}
                   </span>
-                  <strong>{rows.filter((o) => o.status === s).length}</strong>
+                  <strong>{paymentStatusCount(s)}</strong>
                 </li>
               ))}
             </ul>
           </div>
         </section>
       </div>
-      <section className="admin-panel">
-        <div className="admin-panel-heading">
-          <div>
-            <h2>Top Ordered Vehicles</h2>
-            <p>Popularitas kendaraan dalam data contoh</p>
-          </div>
-          <span className="admin-small-label">{rows.length} KENDARAAN</span>
-        </div>
-        <AdminDataTable
-          headers={[
-            "Kendaraan",
-            "Jumlah Pemesanan",
-            "Total Nilai Pesanan",
-            "Status",
-          ]}
-          empty={!rows.length}
-        >
-          {sorted.map((o) => (
-            <tr key={o.id}>
-              <td>
-                <div className="admin-vehicle-cell">
-                  <img src={o.image} alt="" />
-                  <div>
-                    <strong>{o.vehicle}</strong>
-                    <small>{o.brand}</small>
-                  </div>
-                </div>
-              </td>
-              <td>
-                <div
-                  className="admin-bar-track"
-                  aria-label={`${o.vehicle}: 1 pemesanan`}
-                >
-                  <span />
-                </div>
-                1 pesanan
-              </td>
-              <td className="admin-nowrap">{money(o.price)}</td>
-              <td>
-                <StatusBadge status={o.status} />
-              </td>
-            </tr>
-          ))}
-        </AdminDataTable>
-        <div className="admin-table-foot">
-          Nilai pemesanan adalah nilai permintaan kendaraan contoh, bukan omzet
-          atau pembayaran diterima.
-        </div>
-      </section>
     </>
   );
 }

@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { adminApi, ApiError, type AdminSession } from "./api";
 import { Drawer } from "./components";
 
@@ -88,7 +88,7 @@ export default function StaffPage({ session }: { session: AdminSession }) {
       </div>
       <section className="admin-panel">
           <div className="admin-panel-heading"><div><h2>Pengurus terdaftar</h2><p>{staff.length} identitas tercatat</p></div></div>
-          {loading ? <p className="admin-empty">Memuat data…</p> : staff.length === 0 ? <p className="admin-empty">Belum ada pengurus selain akun developer.</p> : <div className="admin-staff-list">{staff.map((item) => <div className="admin-staff-row" key={item.id}><span className="admin-avatar">{item.name.slice(0, 2).toUpperCase()}</span><div><strong>{item.name}</strong><small>{item.username} · {item.steamHex}</small></div><span className="admin-status-pill">{roleLabels[item.role]}</span><button className="admin-text-button" onClick={() => void remove(item.id)}>Hapus</button></div>)}</div>}
+          {loading ? <p className="admin-empty">Memuat data…</p> : staff.length === 0 ? <p className="admin-empty">Belum ada pengurus selain akun developer.</p> : <div className="admin-staff-list">{staff.map((item) => <div className="admin-staff-row" key={item.id}><span className="admin-avatar">{item.name.slice(0, 2).toUpperCase()}</span><div><strong>{item.name}</strong><small>{item.username} · {item.steamHex}</small></div><span className="admin-status-pill">{roleLabels[item.role]}</span><button className="admin-row-button danger-icon" aria-label={`Hapus ${item.name}`} title={`Hapus ${item.name}`} onClick={() => void remove(item.id)}><Trash2 size={16} /></button></div>)}</div>}
       </section>
       {formOpen && <Drawer title="Daftarkan pengurus" onClose={() => setFormOpen(false)}>
         <form className="admin-form" onSubmit={submit}>

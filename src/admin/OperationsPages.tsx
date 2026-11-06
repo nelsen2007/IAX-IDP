@@ -7,7 +7,6 @@ import {
   ArrowUpRight,
   ArrowRight,
   Search,
-  SlidersHorizontal,
   RotateCcw,
   Eye,
   Printer,
@@ -305,7 +304,6 @@ export function OrdersPage({ session }: { session: AdminSession }) {
               {rows.length} dari {allOrders.length} pesanan
             </p>
           </div>
-          <SlidersHorizontal size={18} />
         </div>
         <div className="admin-toolbar orders-toolbar">
           <label className="admin-search">

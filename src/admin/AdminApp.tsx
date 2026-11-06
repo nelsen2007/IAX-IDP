@@ -147,7 +147,7 @@ export default function AdminApp() {
     menus.find((m) => m.to === location.pathname)?.label || "OVERVIEW";
   const isDeveloper = session.user.username === "dev";
   const visibleMenus = menus.filter(
-    (menu) => (menu.to !== "/admin/settings" || isDeveloper) && (menu.to !== "/admin/vehicles" || session.user.role === "ADMIN"),
+    (menu) => (menu.to !== "/admin/settings" || isDeveloper) && (menu.to !== "/admin/vehicles" || session.user.role === "ADMIN") && (menu.to !== "/admin/reports" || session.user.role === "ADMIN" || isDeveloper),
   );
   const navigation = (
     <>
@@ -262,7 +262,7 @@ export default function AdminApp() {
             <Route path="members" element={<MembersPage session={session} />} />
             <Route path="staff" element={<StaffPage session={session} />} />
             <Route path="vehicles" element={<VehiclesPage canManage={session.user.role === "ADMIN"} />} />
-            <Route path="reports" element={<ReportsPage />} />
+            <Route path="reports" element={session.user.role === "ADMIN" || isDeveloper ? <ReportsPage /> : <Navigate to="/admin" replace />} />
             <Route
               path="settings"
               element={
